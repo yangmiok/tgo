@@ -22,9 +22,9 @@ notify() {
 _finish() {
   local code=$?
   if [ $code -eq 0 ]; then
-    echo "\n[OK] Bootstrap completed."
+    printf '\n[OK] Bootstrap completed.\n'
   else
-    echo "\n[ERROR] Bootstrap failed with code $code"
+    printf '\n[ERROR] Bootstrap failed with code %s\n' "$code"
   fi
   notify
   exit $code
@@ -76,17 +76,23 @@ detect_os() {
   esac
 }
 
-install_git() {
-  detect_os
-  echo "Git is not installed. Would you like to install it now? [y/N]"
+confirm() {
+  local prompt="$1"
+  echo "$prompt"
   read -r answer
   case "$answer" in
-    y|Y|yes|YES) ;;
-    *)
-      echo "[FATAL] Git is required. Please install Git and re-run this script." >&2
-      exit 1
-      ;;
+    y|Y|yes|YES) return 0 ;;
+    *)          return 1 ;;
   esac
+}
+
+
+install_git() {
+  detect_os
+  if ! confirm "Git is not installed. Would you like to install it now? [y/N]"; then
+    echo "[FATAL] Git is required. Please install Git and re-run this script." >&2
+    exit 1
+  fi
 
   if [ "$OS_TYPE" = "macos" ]; then
     if command -v brew >/dev/null 2>&1; then
@@ -164,19 +170,54 @@ install_git() {
 
   echo "[INFO] Git installation looks OK: $(git --version 2>/dev/null || echo 'version check failed')"
 }
+install_docker_linux_debian() {
+  echo "[INFO] Using apt-based installation (Debian/Ubuntu)..."
+  sudo apt-get update
+  sudo apt-get remove -y docker docker-engine docker.io containerd runc || true
+  sudo apt-get install -y ca-certificates curl gnupg
+  sudo install -m 0755 -d /etc/apt/keyrings
+  if [ -f /etc/os-release ]; then
+    . /etc/os-release
+  fi
+  curl -fsSL "https://download.docker.com/linux/${ID:-debian}/gpg" | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  sudo chmod a+r /etc/apt/keyrings/docker.gpg
+  arch_dpkg="$(dpkg --print-architecture)"
+  echo "deb [arch=${arch_dpkg} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/${ID:-debian} ${VERSION_CODENAME:-stable} stable" | \
+    sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  sudo apt-get update
+  sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+}
+
+install_docker_linux_rhel() {
+  echo "[INFO] Using yum-based installation (RHEL/CentOS)..."
+  sudo yum remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine || true
+  sudo yum install -y yum-utils
+  sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+}
+
+install_docker_linux_fedora() {
+  echo "[INFO] Using dnf-based installation (Fedora)..."
+  sudo dnf remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine || true
+  sudo dnf -y install dnf-plugins-core
+  sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+  sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+}
+
+install_docker_linux_arch() {
+  echo "[INFO] Using pacman-based installation (Arch Linux)..."
+  sudo pacman -Sy --noconfirm docker docker-compose
+}
+
+
 
 install_docker() {
   detect_os
-  echo "Docker is not installed. Would you like to install it now? [y/N]"
-  read -r answer
-  case "$answer" in
-    y|Y|yes|YES) ;;
-    *)
-      echo "[FATAL] Docker is required. Please install Docker and re-run this script." >&2
-      echo "        https://docs.docker.com/get-docker/" >&2
-      exit 1
-      ;;
-  esac
+  if ! confirm "Docker is not installed. Would you like to install it now? [y/N]"; then
+    echo "[FATAL] Docker is required. Please install Docker and re-run this script." >&2
+    echo "        https://docs.docker.com/get-docker/" >&2
+    exit 1
+  fi
 
   if [ "$OS_TYPE" = "macos" ]; then
     echo "[INFO] Detecting system architecture..."
@@ -252,39 +293,16 @@ install_docker() {
     set +e
     case "$OS_DISTRO" in
       debian)
-        echo "[INFO] Using apt-based installation (Debian/Ubuntu)..."
-        sudo apt-get update
-        sudo apt-get remove -y docker docker-engine docker.io containerd runc || true
-        sudo apt-get install -y ca-certificates curl gnupg
-        sudo install -m 0755 -d /etc/apt/keyrings
-        if [ -f /etc/os-release ]; then
-          . /etc/os-release
-        fi
-        curl -fsSL "https://download.docker.com/linux/${ID:-debian}/gpg" | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-        sudo chmod a+r /etc/apt/keyrings/docker.gpg
-        arch_dpkg="$(dpkg --print-architecture)"
-        echo "deb [arch=${arch_dpkg} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/${ID:-debian} ${VERSION_CODENAME:-stable} stable" | \
-          sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-        sudo apt-get update
-        sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        install_docker_linux_debian
         ;;
       rhel)
-        echo "[INFO] Using yum-based installation (RHEL/CentOS)..."
-        sudo yum remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine || true
-        sudo yum install -y yum-utils
-        sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-        sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        install_docker_linux_rhel
         ;;
       fedora)
-        echo "[INFO] Using dnf-based installation (Fedora)..."
-        sudo dnf remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine || true
-        sudo dnf -y install dnf-plugins-core
-        sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
-        sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        install_docker_linux_fedora
         ;;
       arch)
-        echo "[INFO] Using pacman-based installation (Arch Linux)..."
-        sudo pacman -Sy --noconfirm docker docker-compose
+        install_docker_linux_arch
         ;;
       *)
         echo "[WARN] Unsupported or unknown Linux distribution ($OS_DISTRO)." >&2
@@ -326,16 +344,11 @@ install_docker() {
 
 install_docker_compose() {
   detect_os
-  echo "Docker Compose plugin is not installed. Would you like to install it now? [y/N]"
-  read -r answer
-  case "$answer" in
-    y|Y|yes|YES) ;;
-    *)
-      echo "[FATAL] Docker Compose plugin is required. Please install it and re-run this script." >&2
-      echo "        https://docs.docker.com/compose/install/" >&2
-      exit 1
-      ;;
-  esac
+  if ! confirm "Docker Compose plugin is not installed. Would you like to install it now? [y/N]"; then
+    echo "[FATAL] Docker Compose plugin is required. Please install it and re-run this script." >&2
+    echo "        https://docs.docker.com/compose/install/" >&2
+    exit 1
+  fi
 
   if [ "$OS_TYPE" = "macos" ]; then
     echo "[INFO] On macOS, 'docker compose' is provided by Docker Desktop." >&2
