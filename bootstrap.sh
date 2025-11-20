@@ -522,9 +522,6 @@ main() {
   if [ -f "$DIR/tgo.sh" ]; then
     echo "[RUN] (cd $DIR && ./tgo.sh install)"
     (cd "$DIR" && ./tgo.sh install)
-  elif [ -f "$DIR/deploy.sh" ]; then
-    echo "[RUN] bash $DIR/deploy.sh (legacy)"
-    bash "$DIR/deploy.sh"
   else
     echo "[FATAL] Neither tgo.sh nor deploy.sh found in $DIR" >&2
     exit 1

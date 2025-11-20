@@ -1,0 +1,95 @@
+name: Build and push service images to GHCR
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  discover-services:
+    name: Discover service directories under repos/
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.discover.outputs.services }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Discover services
+        id: discover
+        run: |
+          set -euo pipefail
+
+          if [ ! -d "repos" ]; then
+            echo "repos directory not found" >&2
+            exit 1
+          fi
+
+          services=()
+          for dir in repos/*/; do
+            [ -d "$dir" ] || continue
+            name="${dir#repos/}"
+            name="${name%/}"
+            # Optionally ensure the service has a Dockerfile
+            if [ -f "repos/$name/Dockerfile" ]; then
+              services+=("$name")
+            fi
+          done
+
+          if [ "${#services[@]}" -eq 0 ]; then
+            echo "No service directories with Dockerfile found under repos/" >&2
+            exit 1
+          fi
+
+          json="["
+          first=1
+          for s in "${services[@]}"; do
+            if [ $first -eq 0 ]; then
+              json="$json,"
+            fi
+            json="$json\"$s\""
+            first=0
+          done
+          json="$json]"
+
+          echo "Discovered services: $json"
+          echo "services=$json" >> "$GITHUB_OUTPUT"
+
+  build-and-push:
+    name: Build and push Docker images
+    needs: discover-services
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.discover-services.outputs.services) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image for ${{ matrix.service }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ./repos/${{ matrix.service }}
+          file: ./repos/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}/${{ matrix.service }}:${{ github.ref_name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
