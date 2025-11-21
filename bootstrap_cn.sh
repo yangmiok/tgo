@@ -509,7 +509,7 @@ main() {
 
   # If we're already inside a tgo-deploy working dir, run tgo.sh install
   if [ -f "./tgo.sh" ] && [ -f "./docker-compose.yml" ]; then
-    echo "[INFO] Detected existing tgo-deploy checkout in $(pwd). Running ./tgo.sh install..."
+    echo "[INFO] Detected existing tgo-deploy checkout in $(pwd). Running ./tgo.sh install --cn..."
     ./tgo.sh install --cn
     return
   fi
@@ -530,8 +530,8 @@ main() {
   fi
 
   if [ -f "$DIR/tgo.sh" ]; then
-    echo "[RUN] (cd $DIR && ./tgo.sh install)"
-    (cd "$DIR" && ./tgo.sh install)
+    echo "[RUN] (cd $DIR && ./tgo.sh install --cn)"
+    (cd "$DIR" && ./tgo.sh install --cn)
   else
     echo "[FATAL] Neither tgo.sh nor deploy.sh found in $DIR" >&2
     exit 1

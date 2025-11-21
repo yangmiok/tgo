@@ -20,8 +20,10 @@ sed -e 's|^# Bootstrap script for one-command TGO deployment$|# Bootstrap script
     -e 's|^# Usage (remote):  curl -fsSL https://your.host/bootstrap.sh \| bash$|# Usage (remote):  curl -fsSL https://your.host/bootstrap_cn.sh \| bash|' \
     -e 's|^# Usage (local):   bash bootstrap.sh$|# Usage (local):   bash bootstrap_cn.sh|' \
     -e 's|^REPO="${REPO:-https://github.com/tgoai/tgo.git}"$|REPO="${REPO:-https://gitee.com/tgoai/tgo.git}"|' \
-    -e 's|./tgo.sh install"|./tgo.sh install --cn"|g' \
-    -e 's|./tgo.sh install$|./tgo.sh install --cn|g' \
+    -e 's|\./tgo\.sh install\.\.\.|\./tgo.sh install --cn...|g' \
+    -e 's|\./tgo\.sh install"|\./tgo.sh install --cn"|g' \
+    -e 's|\./tgo\.sh install)|\./tgo.sh install --cn)|g' \
+    -e 's|\./tgo\.sh install$|\./tgo.sh install --cn|g' \
     bootstrap.sh > bootstrap_cn.sh
 
 chmod +x bootstrap_cn.sh
