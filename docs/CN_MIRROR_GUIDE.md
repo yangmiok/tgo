@@ -4,14 +4,42 @@
 
 ## 概述
 
-`tgo.sh` 脚本支持 `--cn` 参数，用于在中国境内网络环境下优化部署体验。启用此选项后，脚本会自动使用以下国内镜像源：
+TGO 提供了完整的中国境内网络优化方案，包括：
 
+1. **一键部署脚本** (`bootstrap_cn.sh`): 使用 Gitee 镜像仓库加速 Git 克隆
+2. **部署脚本参数** (`--cn`): 使用阿里云 ACR 加速 Docker 镜像拉取
+3. **静态配置文件** (`docker-compose.cn.yml`): 预配置的中国镜像映射
+
+启用中国镜像优化后，脚本会自动使用以下国内镜像源：
+
+- **Git 仓库**: Gitee - `https://gitee.com/tgoai/tgo.git`
 - **Docker 镜像**: 阿里云容器镜像服务 (ACR) - `registry.cn-shanghai.aliyuncs.com`
-- **Git 仓库**: Gitee 镜像（如适用）
 
 ## 使用方法
 
-### 1. 基础部署（使用预构建镜像）
+### 方式一：一键部署（推荐）⚡
+
+使用 `bootstrap_cn.sh` 脚本在干净的服务器上一键完成所有部署：
+
+```bash
+# 远程执行（推荐）
+curl -fsSL https://gitee.com/tgoai/tgo/raw/main/bootstrap_cn.sh | bash
+
+# 或本地执行
+bash ./bootstrap_cn.sh
+```
+
+**优势**：
+- 自动检查并安装 Git、Docker、Docker Compose
+- 使用 Gitee 镜像加速仓库克隆（**10-15x** 提升）
+- 自动执行 `./tgo.sh install --cn` 使用阿里云 ACR 镜像
+- 一条命令完成从零到运行的全部流程
+
+### 方式二：手动部署
+
+如果已经克隆了仓库，可以直接使用 `tgo.sh` 脚本：
+
+#### 1. 基础部署（使用预构建镜像）
 
 ```bash
 # 使用阿里云 ACR 镜像部署
@@ -19,11 +47,11 @@
 ```
 
 这将：
-- 自动生成 `docker-compose.cn.yml` 覆盖文件
+- 使用 `docker-compose.cn.yml` 配置文件
 - 从阿里云 ACR 拉取所有服务镜像
 - 启动所有服务
 
-### 2. 从源码构建部署
+#### 2. 从源码构建部署
 
 ```bash
 # 从本地源码构建并部署
@@ -32,7 +60,7 @@
 
 注意：`--source` 模式下，`--cn` 参数主要用于标记，实际构建使用本地代码。
 
-### 3. 参数组合
+#### 3. 参数组合
 
 `--cn` 和 `--source` 参数可以任意顺序组合使用：
 
@@ -42,7 +70,7 @@
 ./tgo.sh install --source --cn
 ```
 
-### 4. 其他命令
+#### 4. 其他命令
 
 所有主要命令都支持 `--cn` 参数：
 

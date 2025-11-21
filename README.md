@@ -10,6 +10,31 @@
 - Docker (建议 24+)、Docker Compose 插件
 - Bash 环境（macOS / Linux / WSL2 均可）
 
+## 多架构支持 🚀
+
+所有 TGO 服务的 Docker 镜像都支持多架构，可以在以下平台上原生运行：
+- **AMD64** (x86_64) - 传统服务器和 PC
+- **ARM64** (aarch64) - Apple Silicon (M1/M2/M3)、AWS Graviton、树莓派等
+
+Docker 会自动选择与您系统架构匹配的镜像，无需额外配置。详见 [多架构支持文档](docs/MULTI_ARCH_SUPPORT.md)。
+
+## 开发者说明
+
+### Bootstrap 脚本构建系统
+
+本项目使用自动化构建系统来维护 `bootstrap.sh` 和 `bootstrap_cn.sh`：
+
+- **源文件**: `bootstrap.sh` - 国际版，作为主模板
+- **生成文件**: `bootstrap_cn.sh` - 中国版，由构建脚本自动生成
+- **构建脚本**: `build-bootstrap.sh` - 从 bootstrap.sh 生成 bootstrap_cn.sh
+
+**修改 bootstrap 脚本时**：
+1. 只需编辑 `bootstrap.sh`
+2. 运行 `./build-bootstrap.sh` 重新生成 `bootstrap_cn.sh`
+3. 提交两个文件
+
+详见 [Bootstrap 构建系统文档](docs/BOOTSTRAP_BUILD_SYSTEM.md)。
+
 ## 快速开始
 1) 克隆并进入仓库
 - git clone <this-repo>
@@ -104,12 +129,17 @@
 
 ## 一键远程部署（bootstrap.sh）
 
-适用场景：在一台干净机器上一条命令完成检查、克隆并运行 deploy.sh。
+适用场景：在一台干净机器上一条命令完成检查、克隆并运行 tgo.sh install。
+
+### 国际版（bootstrap.sh）
+
+使用 GitHub 仓库，适合海外服务器或网络环境良好的用户。
+
 脚本行为概览：
 - 检查 git、docker、docker compose
-- 如当前目录已存在 deploy.sh 和 docker-compose.yml，直接运行 deploy.sh
+- 如当前目录已存在 tgo.sh 和 docker-compose.yml，直接运行 `./tgo.sh install`
 - 否则克隆 REPO 到 DIR（默认 https://github.com/tgoai/tgo.git → ./tgo），可选切换到 REF（分支/Tag/提交）
-- 在 DIR 中执行 deploy.sh
+- 在 DIR 中执行 `./tgo.sh install`
 
 推荐用法（GitHub Raw 示例）：
 - 最新主分支：`curl -fsSL https://raw.githubusercontent.com/tgoai/tgo/main/bootstrap.sh | bash`
@@ -123,9 +153,39 @@
 本地运行（已在仓库内）：
 - `bash ./bootstrap.sh`
 
-可配置项（环境变量）：
-- REPO：仓库地址（默认 https://github.com/tgoai/tgo.git）
-- DIR：克隆目录名（默认 tgo）
-- REF：可选分支/Tag/提交（为空则使用默认分支）
+### 中国版（bootstrap_cn.sh）⚡
 
-注意：如果你将 bootstrap.sh 托管到自有域名，请把上述 URL 替换为你的地址即可。
+**推荐中国境内用户使用**，使用 Gitee 镜像仓库和阿里云容器镜像服务，显著提升部署速度。
+
+主要优化：
+- 使用 Gitee 镜像（https://gitee.com/tgoai/tgo.git）加速 Git 克隆
+- 自动执行 `./tgo.sh install --cn` 使用阿里云 ACR 镜像
+- 其他功能与国际版完全一致
+
+推荐用法（Gitee Raw 示例）：
+- 最新主分支：`curl -fsSL https://gitee.com/tgoai/tgo/raw/main/bootstrap_cn.sh | bash`
+- 指定版本/分支：`REF=v1.0.0 curl -fsSL https://gitee.com/tgoai/tgo/raw/main/bootstrap_cn.sh | bash`
+
+通过 SSH 在远程服务器一键执行：
+- `ssh user@server 'curl -fsSL https://gitee.com/tgoai/tgo/raw/main/bootstrap_cn.sh | bash'`
+
+本地运行（已在仓库内）：
+- `bash ./bootstrap_cn.sh`
+
+### 可配置项（环境变量）
+
+- **REPO**：仓库地址
+  - bootstrap.sh 默认：`https://github.com/tgoai/tgo.git`
+  - bootstrap_cn.sh 默认：`https://gitee.com/tgoai/tgo.git`
+- **DIR**：克隆目录名（默认 `tgo`）
+- **REF**：可选分支/Tag/提交（为空则使用默认分支）
+
+### 性能对比（中国境内网络）
+
+| 操作 | bootstrap.sh | bootstrap_cn.sh | 提升 |
+|------|-------------|-----------------|------|
+| Git 克隆 | ~5-15 分钟 | ~30-60 秒 | **10-15x** |
+| 镜像拉取 | ~10-30 分钟 | ~2-5 分钟 | **5-10x** |
+| 总部署时间 | ~15-45 分钟 | ~3-6 分钟 | **5-7x** |
+
+注意：如果你将 bootstrap.sh 或 bootstrap_cn.sh 托管到自有域名，请把上述 URL 替换为你的地址即可。

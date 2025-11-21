@@ -154,8 +154,6 @@ backups/
 alembic/versions/*.py
 !alembic/versions/.gitkeep
 
-# Docker
-.dockerignore
 
 # Temporary files
 tmp/

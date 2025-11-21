@@ -1,12 +1,22 @@
 #!/usr/bin/env bash
-# Bootstrap script for one-command TGO deployment
-# Usage (remote):  curl -fsSL https://your.host/bootstrap.sh | bash
-# Usage (local):   bash bootstrap.sh
+# Bootstrap script for one-command TGO deployment (China Network Optimized)
+#
+# This is the China-optimized version of bootstrap.sh that uses Gitee mirrors
+# for faster Git repository cloning in mainland China.
+#
+# Differences from bootstrap.sh:
+# - Uses Gitee (https://gitee.com) instead of GitHub for repository cloning
+# - All other functionality remains identical
+#
+# Note: After deployment, use './tgo.sh install --cn' to pull Docker images
+# from Alibaba Cloud Container Registry for faster downloads in China.
+# Usage (remote):  curl -fsSL https://your.host/bootstrap_cn.sh | bash
+# Usage (local):   bash bootstrap_cn.sh
 
 set -euo pipefail
 
 # ---------- Configuration (overridable via env) ----------
-REPO="${REPO:-https://github.com/tgoai/tgo.git}"
+REPO="${REPO:-https://gitee.com/tgoai/tgo.git}"
 DIR="${DIR:-tgo}"
 REF="${REF:-}"
 
@@ -487,11 +497,11 @@ main() {
     echo >&2
     echo "Next steps (choose one):" >&2
     echo "  1) Log out and log back in, then run (from your tgo-deploy repo directory):" >&2
-    echo "       ./tgo.sh install" >&2
+    echo "       ./tgo.sh install --cn" >&2
     echo "     OR" >&2
     echo "  2) In this terminal, run:" >&2
     echo "       newgrp docker" >&2
-    echo "       ./tgo.sh install" >&2
+    echo "       ./tgo.sh install --cn" >&2
     echo >&2
     echo "[INFO] Exiting bootstrap now so you can restart your session with Docker permissions." >&2
     return
@@ -500,7 +510,7 @@ main() {
   # If we're already inside a tgo-deploy working dir, run tgo.sh install
   if [ -f "./tgo.sh" ] && [ -f "./docker-compose.yml" ]; then
     echo "[INFO] Detected existing tgo-deploy checkout in $(pwd). Running ./tgo.sh install..."
-    ./tgo.sh install
+    ./tgo.sh install --cn
     return
   fi
 
