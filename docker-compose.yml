@@ -181,8 +181,6 @@ services:
       - tgo-ai
       - postgres
       - redis
-    ports:
-      - "${API_PORT:-8000}:8000"
     volumes:
       # Persist API uploads (chat files, platform logos, etc.) under unified data directory
       - ./data/tgo-api/uploads:/app/uploads
@@ -208,12 +206,14 @@ services:
     container_name: tgo-web
     environment:
       # Runtime environment variables (injected by docker-entrypoint.sh)
-      API_BASE_URL: ${API_BASE_URL:-http://localhost:8000}
+      API_BASE_URL: ${API_BASE_URL:-http://tgo-api:8000}
       DEBUG_MODE: ${DEBUG_MODE:-false}
+      # Frontend environment variables for Nginx
+      VITE_WIDGET_PREVIEW_URL: ${VITE_WIDGET_PREVIEW_URL:-http://localhost/widget}
     env_file:
       - ./envs/tgo-web.env
-    ports:
-      - "${WEB_PORT:-3000}:80"
+    volumes:
+      - ./scripts/inject-frontend-env.sh:/docker-entrypoint.d/05-inject-frontend-env.sh:ro
     restart: unless-stopped
 
   # Widget app (React build -> nginx)
@@ -222,10 +222,48 @@ services:
     container_name: tgo-widget-app
     environment:
       # Runtime environment variables (injected by docker-entrypoint.sh)
-      API_BASE_URL: ${API_BASE_URL:-http://localhost:8000}
+      API_BASE_URL: ${API_BASE_URL:-http://tgo-api:8000}
     env_file:
       - ./envs/tgo-widget-app.env
-    ports:
-      - "${WIDGET_PORT:-3001}:80"
     restart: unless-stopped
+
+  # Nginx Reverse Proxy for Domain and SSL Management
+  nginx:
+    image: nginx:alpine
+    container_name: tgo-nginx
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "${NGINX_SSL_PORT:-443}:443"
+    volumes:
+      # Nginx configuration
+      - ./data/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./data/nginx/ssl:/etc/nginx/ssl:ro
+      # Certbot challenge directory
+      - ./data/certbot/www:/var/www/certbot:ro
+      # Certbot configuration
+      - ./data/certbot/conf:/etc/letsencrypt:ro
+    depends_on:
+      - tgo-web
+      - tgo-widget-app
+      - tgo-api
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Certbot for Let's Encrypt certificate management
+  certbot:
+    image: certbot/certbot:latest
+    container_name: tgo-certbot
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+      - ./data/certbot/logs:/var/log/letsencrypt
+    entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $${!}; done"
+    restart: unless-stopped
+    profiles:
+      - ssl-auto
 

@@ -27,6 +27,18 @@ Commands:
                                       Start/stop/remove core services
   tools <start|stop>                  Start/stop debug tools (kafka-ui, adminer)
   build [--source] [--cn] <service>   Rebuild specific service from source (api|rag|ai|platform|web|widget|all)
+  config <subcommand> [args]          Configure domains and SSL certificates
+
+Config Subcommands:
+  web_domain <domain>                 Set web service domain (e.g., www.talkgo.cn)
+  widget_domain <domain>              Set widget service domain (e.g., widget.talkgo.cn)
+  api_domain <domain>                 Set API service domain (e.g., api.talkgo.cn)
+  ssl_mode <auto|manual|none>         Set SSL mode (auto=Let's Encrypt, manual=custom, none=no SSL)
+  ssl_email <email>                   Set Let's Encrypt email for certificate renewal
+  ssl_manual <cert> <key> [domain]    Install manual SSL certificate
+  setup_letsencrypt                   Setup Let's Encrypt certificates for all domains
+  apply                               Regenerate Nginx configuration
+  show                                Show current domain configuration
 
 Options:
   --source    Build and run services from local source code (repos/)
@@ -37,6 +49,15 @@ Notes:
   - Pass --source to build and run services from local source (docker-compose.yml + docker-compose.source.yml).
   - Pass --cn to use China-based mirrors for faster access in mainland China.
   - Options can be combined: ./tgo.sh install --source --cn
+
+Domain Configuration Examples:
+  ./tgo.sh config web_domain www.talkgo.cn
+  ./tgo.sh config widget_domain widget.talkgo.cn
+  ./tgo.sh config api_domain api.talkgo.cn
+  ./tgo.sh config ssl_mode auto
+  ./tgo.sh config ssl_email admin@talkgo.cn
+  ./tgo.sh config setup_letsencrypt
+  ./tgo.sh config show
 
 Upgrade Command:
   - The upgrade command remembers the mode used during install (saved in ./data/.tgo-install-mode)
@@ -246,7 +267,8 @@ cmd_install() {
     "./data/wukongim"
     "./data/kafka/data"
     "./data/tgo-rag/uploads"
-    "./data/tgo-api/uploads"
+    "./data/tgo-api/uploads",
+    "./data/nginx"
   )
 
   # Create directories and set permissions
@@ -292,6 +314,11 @@ cmd_install() {
   done
 
   echo "[INFO] Data directories created and permissions set."
+
+  # Initialize domain configuration and generate Nginx config
+  echo "[INFO] Initializing Nginx configuration..."
+  ensure_domain_config
+  regenerate_nginx_config
 
   echo "[INFO] Starting core infrastructure (postgres, redis, kafka, wukongim)..."
   docker compose --env-file "$ENV_FILE" $compose_file_args up -d postgres redis kafka wukongim
@@ -721,6 +748,207 @@ cmd_build() {
   fi
 }
 
+cmd_config() {
+  local domain_config_file="./data/.tgo-domain-config"
+  local subcommand=${1:-show}
+  shift || true
+
+  # Ensure data directory exists
+  mkdir -p "$(dirname "$domain_config_file")"
+
+  case "$subcommand" in
+    web_domain)
+      if [ $# -eq 0 ]; then
+        echo "[ERROR] Domain value required"
+        exit 1
+      fi
+      local domain="$1"
+      ensure_domain_config
+      sed -i.bak "s|^WEB_DOMAIN=.*|WEB_DOMAIN=$domain|" "$domain_config_file"
+      rm -f "$domain_config_file.bak"
+      echo "[INFO] Web domain set to: $domain"
+      regenerate_nginx_config
+      ;;
+    widget_domain)
+      if [ $# -eq 0 ]; then
+        echo "[ERROR] Domain value required"
+        exit 1
+      fi
+      local domain="$1"
+      ensure_domain_config
+      sed -i.bak "s|^WIDGET_DOMAIN=.*|WIDGET_DOMAIN=$domain|" "$domain_config_file"
+      rm -f "$domain_config_file.bak"
+      echo "[INFO] Widget domain set to: $domain"
+      regenerate_nginx_config
+      ;;
+    api_domain)
+      if [ $# -eq 0 ]; then
+        echo "[ERROR] Domain value required"
+        exit 1
+      fi
+      local domain="$1"
+      ensure_domain_config
+      sed -i.bak "s|^API_DOMAIN=.*|API_DOMAIN=$domain|" "$domain_config_file"
+      rm -f "$domain_config_file.bak"
+      echo "[INFO] API domain set to: $domain"
+      regenerate_nginx_config
+      ;;
+    ssl_mode)
+      if [ $# -eq 0 ]; then
+        echo "[ERROR] SSL mode required (auto|manual|none)"
+        exit 1
+      fi
+      local mode="$1"
+      if [[ ! "$mode" =~ ^(auto|manual|none)$ ]]; then
+        echo "[ERROR] Invalid SSL mode: $mode (must be auto, manual, or none)"
+        exit 1
+      fi
+      ensure_domain_config
+      sed -i.bak "s|^SSL_MODE=.*|SSL_MODE=$mode|" "$domain_config_file"
+      rm -f "$domain_config_file.bak"
+      echo "[INFO] SSL mode set to: $mode"
+      ;;
+    ssl_email)
+      if [ $# -eq 0 ]; then
+        echo "[ERROR] Email value required"
+        exit 1
+      fi
+      local email="$1"
+      ensure_domain_config
+      sed -i.bak "s|^SSL_EMAIL=.*|SSL_EMAIL=$email|" "$domain_config_file"
+      rm -f "$domain_config_file.bak"
+      echo "[INFO] SSL email set to: $email"
+      ;;
+    ssl_manual)
+      if [ $# -lt 2 ]; then
+        echo "[ERROR] Usage: ./tgo.sh config ssl_manual <cert_file> <key_file> [domain]"
+        exit 1
+      fi
+      local cert_file="$1"
+      local key_file="$2"
+      local domain="${3:-}"
+
+      if [ ! -f "$cert_file" ] || [ ! -f "$key_file" ]; then
+        echo "[ERROR] Certificate or key file not found"
+        exit 1
+      fi
+
+      ensure_domain_config
+
+      # If domain not specified, use all configured domains
+      if [ -z "$domain" ]; then
+        source "$domain_config_file" 2>/dev/null || true
+        for d in "$WEB_DOMAIN" "$WIDGET_DOMAIN" "$API_DOMAIN"; do
+          [ -z "$d" ] && continue
+          copy_manual_cert "$cert_file" "$key_file" "$d"
+        done
+      else
+        copy_manual_cert "$cert_file" "$key_file" "$domain"
+      fi
+
+      sed -i.bak "s/^SSL_MODE=.*/SSL_MODE=manual/" "$domain_config_file"
+      echo "[INFO] Manual SSL certificates installed"
+      ;;
+    setup_letsencrypt)
+      ensure_domain_config
+      source "$domain_config_file" 2>/dev/null || true
+
+      if [ -z "$WEB_DOMAIN" ] || [ -z "$WIDGET_DOMAIN" ] || [ -z "$API_DOMAIN" ]; then
+        echo "[ERROR] All domains must be configured first"
+        echo "[INFO] Run: ./tgo.sh config web_domain <domain>"
+        exit 1
+      fi
+
+      local email="${SSL_EMAIL:-admin@example.com}"
+      echo "[INFO] Setting up Let's Encrypt certificates..."
+      bash ./scripts/setup-ssl.sh "$WEB_DOMAIN" "$WIDGET_DOMAIN" "$API_DOMAIN" "$email"
+
+      sed -i.bak "s|^SSL_MODE=.*|SSL_MODE=auto|" "$domain_config_file"
+      rm -f "$domain_config_file.bak"
+      echo "[INFO] SSL mode set to: auto"
+      ;;
+    apply)
+      if [ ! -f "$domain_config_file" ]; then
+        echo "[ERROR] No domain configuration found"
+        exit 1
+      fi
+      regenerate_nginx_config
+      echo "[INFO] Nginx configuration applied"
+      ;;
+    show)
+      if [ ! -f "$domain_config_file" ]; then
+        echo "[INFO] No domain configuration found"
+        echo "[INFO] Run: ./tgo.sh config web_domain <domain> to get started"
+        exit 0
+      fi
+      echo "[INFO] Current domain configuration:"
+      cat "$domain_config_file"
+      ;;
+    *)
+      echo "[ERROR] Unknown config subcommand: $subcommand"
+      echo "Usage: ./tgo.sh config <subcommand> [args]"
+      echo ""
+      echo "Subcommands:"
+      echo "  web_domain <domain>           Set web service domain"
+      echo "  widget_domain <domain>        Set widget service domain"
+      echo "  api_domain <domain>           Set API service domain"
+      echo "  ssl_mode <auto|manual|none>   Set SSL mode"
+      echo "  ssl_email <email>             Set Let's Encrypt email"
+      echo "  ssl_manual <cert> <key> [domain]  Install manual SSL certificate"
+      echo "  setup_letsencrypt             Setup Let's Encrypt certificates"
+      echo "  apply                         Regenerate Nginx configuration"
+      echo "  show                          Show current configuration"
+      exit 1
+      ;;
+  esac
+}
+
+# Helper function to ensure domain config file exists
+ensure_domain_config() {
+  local domain_config_file="./data/.tgo-domain-config"
+  if [ ! -f "$domain_config_file" ]; then
+    cat > "$domain_config_file" << 'EOF'
+# TGO Domain Configuration
+# Auto-generated by ./tgo.sh config
+
+WEB_DOMAIN=
+WIDGET_DOMAIN=
+API_DOMAIN=
+SSL_MODE=none
+SSL_EMAIL=
+ENABLE_SSL_AUTO_RENEW=true
+EOF
+    echo "[INFO] Created domain configuration file: $domain_config_file"
+  fi
+}
+
+# Helper function to copy manual SSL certificates
+copy_manual_cert() {
+  local cert_file="$1"
+  local key_file="$2"
+  local domain="$3"
+
+  local ssl_dir="./data/nginx/ssl/$domain"
+  mkdir -p "$ssl_dir"
+
+  cp "$cert_file" "$ssl_dir/cert.pem"
+  cp "$key_file" "$ssl_dir/key.pem"
+
+  echo "[INFO] Certificate installed for: $domain"
+}
+
+# Helper function to regenerate Nginx configuration
+regenerate_nginx_config() {
+  if [ ! -f "./scripts/generate-nginx-config.sh" ]; then
+    echo "[WARN] Nginx config generator not found"
+    return
+  fi
+
+  bash ./scripts/generate-nginx-config.sh || {
+    echo "[WARN] Failed to regenerate Nginx configuration"
+  }
+}
+
 main() {
   local cmd=${1:-help}
   shift || true
@@ -732,6 +960,7 @@ main() {
     service) cmd_service "$@" ;;
     tools) cmd_tools "$@" ;;
     build) cmd_build "$@" ;;
+    config) cmd_config "$@" ;;
     *)
       echo "[ERROR] Unknown command: $cmd" >&2
       usage
