@@ -141,11 +141,11 @@ function OrbitIntegrations() {
 function HomepageHeader() {
   const {siteConfig} = useDocusaurusContext();
   return (
-    <header className={styles.heroBanner}>
+    <header className={styles.heroBanner} style={{marginTop: "-64px"}}>
       {/* 背景光晕 */}
       <div className={styles.bgGlow}></div>
       
-      <div className="container">
+      <div className="container" style={{marginTop: "84px"}}>
         <div className={styles.heroContent}>
           <h1 className={styles.heroTitle}>
             <span className={styles.heroTitleHighlight}>客服智能体</span><br />
