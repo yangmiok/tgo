@@ -126,26 +126,10 @@ const ChatWindow: React.FC<ChatWindowProps> = React.memo(({ activeChat, onSendMe
           content: message.trim(),
           timestamp: Date.now(),
         };
-        const localMessage: Message = {
-          id: nowId,
-          type: 'staff',
-          content: message.trim(),
-          timestamp: new Date().toISOString(),
-          messageId: nowId,
-          clientMsgNo: nowId,
-          messageSeq: 0,
-          fromUid: user?.id ? `${user.id}-staff` : 'unknown-staff',
-          channelId,
-          channelType,
-          payloadType: 1 as any,
-          metadata: { isLocal: true },
-        };
-        // Immediate UI update
-        addMessage(localMessage);
-        updateConversationLastMessage(channelId, channelType, localMessage);
-        moveConversationToTop(channelId, channelType);
 
         // Agent/Team chat: use REST API (/v1/chat/team) instead of WebSocket
+        // Don't add local message - rely on WebSocket to receive the message back
+        // This prevents duplicate messages in the UI
         if (isAIChat) {
           try {
             let response;
@@ -164,21 +148,39 @@ const ChatWindow: React.FC<ChatWindowProps> = React.memo(({ activeChat, onSendMe
                 message: message.trim(),
               });
             }
-            // Update message metadata to mark as successfully sent
-            updateMessageByClientMsgNo(nowId, {
-              metadata: { ws_sent: true, ws_send_error: false, client_msg_no: response.client_msg_no } as any
+            console.log('🤖 AI Chat: Message sent successfully via REST API', {
+              channelId,
+              clientMsgNo: response.client_msg_no
             });
             onSendMessage?.(message);
           } catch (e: any) {
             const errorKey = isAgentChat ? 'chat.send.agentErrorLog' : 'chat.send.teamErrorLog';
             const errorDefault = isAgentChat ? '智能体消息发送失败' : '团队消息发送失败';
             console.error(t(errorKey, errorDefault), e);
-            const apiMsg = e?.message || t(isAgentChat ? 'chat.send.agentError' : 'chat.send.teamError', errorDefault + '，请稍后重试');
-            updateMessageByClientMsgNo(nowId, { metadata: { ws_send_error: true, error_text: apiMsg } as any });
             showApiError(showToast, e);
           }
           return;
         }
+
+        // For regular visitor chats: add local message for immediate UI feedback
+        const localMessage: Message = {
+          id: nowId,
+          type: 'staff',
+          content: message.trim(),
+          timestamp: new Date().toISOString(),
+          messageId: nowId,
+          clientMsgNo: nowId,
+          messageSeq: 0,
+          fromUid: user?.id ? `${user.id}-staff` : 'unknown-staff',
+          channelId,
+          channelType,
+          payloadType: 1 as any,
+          metadata: { isLocal: true },
+        };
+        // Immediate UI update for visitor chats
+        addMessage(localMessage);
+        updateConversationLastMessage(channelId, channelType, localMessage);
+        moveConversationToTop(channelId, channelType);
 
         // If non-website platform, send via REST first
         if (platformType && platformType !== PlatformType.WEBSITE) {

@@ -443,6 +443,10 @@ export class WuKongIMUtils {
     const hasStreamData = !!(wkMessage.stream_data && wkMessage.stream_data.trim() !== '');
     const isStreamingInProgress = hasStreamData && wkMessage.end !== 1;
 
+    // Extract end and end_reason for error state detection
+    const streamEnd = wkMessage.end;
+    const streamEndReason = wkMessage.end_reason;
+
     const convertedMessage: Message = {
       id: idStr,
       content,
@@ -464,6 +468,8 @@ export class WuKongIMUtils {
         is_read: false,
         has_stream_data: hasStreamData,
         is_streaming: isStreamingInProgress, // Flag for UI to show loading cursor
+        stream_end: streamEnd, // Stream end flag (0=not ended, 1=ended)
+        stream_end_reason: streamEndReason, // Stream end reason code (>0 indicates error)
         ...imageMeta,
         ...fileMeta,
         ...(richImagesMeta ? { images: richImagesMeta } : {}),

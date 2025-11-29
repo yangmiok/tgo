@@ -5,27 +5,27 @@ import { formatMessageTime } from '../utils/time'
 import { useChatStore } from '../store'
 import { AlertCircle, RotateCw, Trash2 } from 'lucide-react'
 import { ReasonCode } from 'easyjssdk'
-import { Bubble, Cursor, TextMessage, ImageMessage, FileMessage, MixedMessage, MixedImages } from './messages'
+import { Bubble, Cursor, AILoadingDots, TextMessage, ImageMessage, FileMessage, MixedMessage, MixedImages } from './messages'
 
 
 
-const Main = styled.main`flex:1; min-height:0; overflow:auto; padding: 12px 12px 8px; background:#fff;`
+const Main = styled.main`flex:1; min-height:0; overflow:auto; padding: 12px 12px 8px; background: var(--bg-primary, #fff);`
 const List = styled.ul`list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px;`
 const Row = styled.div<{self:boolean}>`
   display:flex; ${p => p.self ? 'justify-content:flex-end;' : 'justify-content:flex-start;'}
 `
 
-const Meta = styled.div`font-size: 12px; color: #6b7280; margin-top: 6px;`
+const Meta = styled.div`font-size: 12px; color: var(--text-secondary, #6b7280); margin-top: 6px;`
 const Status = styled('div')<{ self: boolean; kind: 'sending' | 'error' }>`
   font-size: 12px; margin-top: 6px; display:flex; align-items:center; gap:6px;
   ${p => p.self ? 'justify-content:flex-end;' : 'justify-content:flex-start;'}
-  color: ${p => p.kind==='error' ? '#ef4444' : '#9ca3af'};
+  color: ${p => p.kind==='error' ? 'var(--error-color, #ef4444)' : 'var(--text-muted, #9ca3af)'};
 `
 const LinkBtn = styled.button`
   border:0; background:transparent; color:inherit; cursor:pointer; padding:0 2px; text-decoration: underline;
 `
 const TopNotice = styled.li`
-  list-style:none; text-align:center; color:#6b7280; font-size:12px; padding: 4px 0 8px;
+  list-style:none; text-align:center; color: var(--text-secondary, #6b7280); font-size:12px; padding: 4px 0 8px;
 `
 
 
@@ -136,19 +136,23 @@ export default function MessageList({ messages }: { messages: ChatMessage[] }){
                 </div>
               ) : m.payload.type === 2 ? (
                 <ImageMessage url={m.payload.url} w={m.payload.width} h={m.payload.height} />
+              ) : m.streamData && m.streamData.length ? (
+                /* Streaming content - show with blinking cursor */
+                <Bubble self={false}>
+                  <TextMessage content={m.streamData} />
+                  <Cursor />
+                </Bubble>
+              ) : m.payload.type === 100 ? (
+                /* AI Loading - show only when no streamData yet */
+                <Bubble self={false}>
+                  <AILoadingDots><span /><span /><span /></AILoadingDots>
+                </Bubble>
               ) : (
                 <Bubble self={m.role==='user'}>
-                  {m.streamData && m.streamData.length ? (
-                    <>
-                      <TextMessage content={m.streamData} />
-                      <Cursor />
-                    </>
+                  {m.payload.type === 1 ? (
+                    <TextMessage content={m.payload.content} />
                   ) : (
-                    m.payload.type === 1 ? (
-                      <TextMessage content={m.payload.content} />
-                    ) : (
-                      <div>[消息]</div>
-                    )
+                    <div>[消息]</div>
                   )}
                 </Bubble>
               )}

@@ -97,6 +97,7 @@ function toPayloadFromAny(raw: any): MessagePayload {
     return file ? { type: 12, content: raw.content, images, file } : { type: 12, content: raw.content, images }
   }
   if (t === 99 && typeof raw?.cmd === 'string') return { type: 99, cmd: raw.cmd, param: raw?.param ?? {} }
+  if (t === 100) return { type: 100 }
   if (typeof raw === 'string') return { type: 1, content: raw }
   return { type: 1, content: typeof raw?.content === 'string' ? raw.content : JSON.stringify(raw ?? {}) }
 }

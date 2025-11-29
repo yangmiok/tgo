@@ -1,35 +1,24 @@
 import React from 'react';
-import AIInfoCard from './AIInfoCard';
-import ReplySuggestions from './ReplySuggestions';
-
-import type { Message } from '@/types';
-import { MessagePayloadType } from '@/types';
-
-import { useAuthStore } from '@/stores/authStore';
-
-import { generateDefaultAvatar, hasValidAvatar } from '@/utils/avatarUtils';
-import { useChannelStore, getChannelKey } from '@/stores/channelStore';
-import { getPlatformIconComponent, getPlatformLabel, toPlatformType, getPlatformColor } from '@/utils/platformUtils';
-import { PlatformType } from '@/types';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+import type { Message } from '@/types';
+import { MessagePayloadType, PlatformType } from '@/types';
+import { useAuthStore } from '@/stores/authStore';
+import { useChannelStore, getChannelKey } from '@/stores/channelStore';
+import { StreamEndReason } from '@/stores/chatStore';
+import { generateDefaultAvatar, hasValidAvatar } from '@/utils/avatarUtils';
+import { getPlatformIconComponent, getPlatformLabel, toPlatformType, getPlatformColor } from '@/utils/platformUtils';
 
-
-
-
-
-
-
-
+import AIInfoCard from './AIInfoCard';
+import ReplySuggestions from './ReplySuggestions';
 
 import TextMessage from './messages/TextMessage';
 import ImageMessage from './messages/ImageMessage';
 import FileMessage from './messages/FileMessage';
 import RichTextMessage from './messages/RichTextMessage';
 import LoadingMessage from './messages/LoadingMessage';
-
-
+import AIErrorMessage from './messages/AIErrorMessage';
 
 interface ChatMessageProps {
   message: Message;
@@ -37,203 +26,205 @@ interface ChatMessageProps {
 }
 
 /**
+ * Renders the appropriate message content component based on message type
+ */
+const MessageContent: React.FC<{
+  message: Message;
+  isStaff: boolean;
+  streamError: boolean;
+  streamErrorText: string;
+  isStreamLoading: boolean;
+  isRichText: boolean;
+  isImage: boolean;
+  isFile: boolean;
+}> = ({ message, isStaff, streamError, streamErrorText, isStreamLoading, isRichText, isImage, isFile }) => {
+  if (streamError) return <AIErrorMessage isStaff={isStaff} errorText={streamErrorText} />;
+  if (isStreamLoading) return <LoadingMessage isStaff={isStaff} />;
+  if (isRichText) return <RichTextMessage message={message} isStaff={isStaff} />;
+  if (isImage) return <ImageMessage message={message} isStaff={isStaff} />;
+  if (isFile) return <FileMessage message={message} isStaff={isStaff} />;
+  return <TextMessage message={message} isStaff={isStaff} />;
+};
+
+/**
  * Individual chat message component
  */
 const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSuggestionClick }) => {
   const { t } = useTranslation();
-
-  const typedPayload = message.payload as any | undefined;
-  const isRichText = (typedPayload?.type === MessagePayloadType.RICH_TEXT) || (message.payloadType === MessagePayloadType.RICH_TEXT) || Array.isArray(message.metadata?.images);
-
-
-  // Current user uid to judge own message
   const user = useAuthStore(state => state.user);
   const currentUid = React.useMemo(() => (user?.id ? `${user.id}-staff` : null), [user?.id]);
 
-
-  const fromUid = message.fromUid;
-  const isSystemMessage = message.type === 'system';
-  const isOwnMessage = currentUid ? fromUid === currentUid : false;
-
-  // Failure indicators from metadata
   const meta: any = message.metadata || {};
+  const typedPayload = message.payload as any | undefined;
+
+  // Message type flags
+  const isSystemMessage = message.type === 'system';
+  const isOwnMessage = currentUid ? message.fromUid === currentUid : false;
+
+  // Error state detection
   const platformSendError = Boolean(meta.platform_send_error);
   const wsSendError = Boolean(meta.ws_send_error);
   const uploadError = meta.upload_status === 'error';
-  const hasError = platformSendError || wsSendError || uploadError;
+  const hasSendError = platformSendError || wsSendError || uploadError;
 
-  // Determine error text based on error type
-  const getErrorText = () => {
+  // Stream error: end=1 and end_reason > 0 (Timeout/Error/Cancelled/Force)
+  const streamEndReasonNum = typeof meta.stream_end_reason === 'string'
+    ? parseInt(meta.stream_end_reason, 10)
+    : (typeof meta.stream_end_reason === 'number' ? meta.stream_end_reason : 0);
+  const streamError = meta.stream_end === 1 && meta.stream_end_reason != null && meta.stream_end_reason !== '' && streamEndReasonNum > 0;
+  const hasError = hasSendError || streamError;
+
+  // Get AI stream error text based on end reason
+  const getStreamErrorText = (): string => {
+    switch (streamEndReasonNum) {
+      case StreamEndReason.TIMEOUT:
+        return t('chat.messages.stream.timeout', 'AI 回复超时');
+      case StreamEndReason.ERROR:
+        return t('chat.messages.stream.error', 'AI 回复生成失败');
+      case StreamEndReason.CANCELLED:
+        return t('chat.messages.stream.cancelled', 'AI 回复已取消');
+      case StreamEndReason.FORCE:
+        return t('chat.messages.stream.force', 'AI 回复被强制终止');
+      default:
+        return t('chat.messages.stream.error', 'AI 回复生成失败');
+    }
+  };
+
+  // Get send error text for error icon popup
+  const getSendErrorText = (): string => {
     if (typeof meta.error_text === 'string' && meta.error_text.trim().length > 0) {
       return meta.error_text;
     }
-    if (platformSendError) {
-      return t('chat.input.errors.platformFailed', '平台消息发送失败，请稍后重试');
-    }
-    if (wsSendError) {
-      return t('chat.input.errors.websocketFailed', 'WebSocket 发送失败，请检查网络连接');
-    }
+    if (platformSendError) return t('chat.input.errors.platformFailed', '平台消息发送失败，请稍后重试');
+    if (wsSendError) return t('chat.input.errors.websocketFailed', 'WebSocket 发送失败，请检查网络连接');
     if (uploadError) {
-      // Check message type for appropriate upload error message
       const isImageMsg = message.payloadType === MessagePayloadType.IMAGE || Boolean(meta.image_url || meta.image_preview_url);
       return isImageMsg ? t('chat.messages.image.uploadFailed', '上传失败') : t('chat.input.upload.failed', '上传失败');
     }
     return '';
   };
-  const errorText = getErrorText();
-  const [errorOpen, setErrorOpen] = React.useState(false);
 
-  // Sending status indicator
-  // A message is considered "sending" if it's a local message (isLocal) and hasn't been sent yet (ws_sent !== true)
-  // and doesn't have any errors
+  const [errorOpen, setErrorOpen] = React.useState(false);
   const isSending = Boolean(meta.isLocal) && !hasError && meta.ws_sent !== true;
 
-  // Sender channel info lazy-loading
-  // Use message.channelId (the conversation channel) for cache lookup, as this is what VisitorPanel updates
-  const senderChannelId = message.channelId || message.fromUid;
-  const senderChannelType = message.channelType ?? 1;
-  const compositeKey = React.useMemo(() => {
-    if (!senderChannelId || senderChannelType == null) return null;
-    return getChannelKey(senderChannelId, senderChannelType);
-  }, [senderChannelId, senderChannelType]);
+  // Message type detection
+  const isRichText = typedPayload?.type === MessagePayloadType.RICH_TEXT || message.payloadType === MessagePayloadType.RICH_TEXT || Array.isArray(meta.images);
+  const isImage = typedPayload?.type === MessagePayloadType.IMAGE || message.payloadType === MessagePayloadType.IMAGE || Boolean(meta.image_url || meta.image_preview_url);
+  const isFile = typedPayload?.type === MessagePayloadType.FILE || message.payloadType === MessagePayloadType.FILE || Boolean(meta.file_url || meta.file_name);
+  const isStreamType = typedPayload?.type === MessagePayloadType.STREAM || message.payloadType === MessagePayloadType.STREAM;
 
-  const channelInfoCache = useChannelStore(state => (senderChannelId && senderChannelType != null ? state.getChannel(senderChannelId, senderChannelType) : undefined));
-  const isChannelFetching = useChannelStore(state => (compositeKey ? Boolean(state.inFlight[compositeKey]) : false));
-  const channelStoreError = useChannelStore(state => (compositeKey ? state.errors[compositeKey] : null));
+  // Stream loading: only show loading if stream type AND no content AND not ended (end !== 1)
+  // Once end=1, the stream is complete regardless of end_reason
+  const isStreamEnded = meta.stream_end === 1;
+  const isStreamLoading = isStreamType && !meta.has_stream_data && !message.content?.trim() && !hasError && !isStreamEnded;
+
+  // Sender channel info - use fromUid as the sender's channel ID
+  // This is different from message.channelId which is the conversation channel
+  const senderChannelId = message.fromUid;
+  const senderChannelType = 1; // Person-to-person channel type
+  const compositeKey = React.useMemo(
+    () => senderChannelId ? getChannelKey(senderChannelId, senderChannelType) : null,
+    [senderChannelId, senderChannelType]
+  );
+
+  const channelInfoCache = useChannelStore(state => senderChannelId ? state.getChannel(senderChannelId, senderChannelType) : undefined);
+  const isChannelFetching = useChannelStore(state => compositeKey ? Boolean(state.inFlight[compositeKey]) : false);
+  const channelStoreError = useChannelStore(state => compositeKey ? state.errors[compositeKey] : null);
   const ensureChannelInfo = useChannelStore(state => state.ensureChannel);
 
-  // Avoid fetching staff/self; only attempt for visitor messages when fromInfo missing/incomplete
+  // Fetch sender info for visitor messages (not own messages, not staff messages)
   const needsSenderInfo = !message.fromInfo?.name || !message.fromInfo?.avatar;
   React.useEffect(() => {
-    if (!senderChannelId || senderChannelType == null) return;
-    if (isOwnMessage || (senderChannelId && senderChannelId.endsWith('-staff'))) return;
-    if (!needsSenderInfo) return;
-    if (channelInfoCache || isChannelFetching || channelStoreError) return;
+    if (!senderChannelId) return;
+    // Skip fetching for own messages and staff messages
+    if (isOwnMessage || senderChannelId.endsWith('-staff')) return;
+    if (!needsSenderInfo || channelInfoCache || isChannelFetching || channelStoreError) return;
     ensureChannelInfo({ channel_id: senderChannelId, channel_type: senderChannelType }).catch(() => {});
   }, [senderChannelId, senderChannelType, isOwnMessage, needsSenderInfo, channelInfoCache, isChannelFetching, channelStoreError, ensureChannelInfo]);
 
-  const displayName = message.fromInfo?.name || channelInfoCache?.name || (isOwnMessage ? t('chat.header.staffFallback', '客服') : t('chat.header.visitorFallback', { suffix: String(senderChannelId || '').slice(-4), defaultValue: `访客${String(senderChannelId || '').slice(-4)}` }));
-  // Prioritize channelInfoCache avatar as it's the most up-to-date (e.g., after avatar upload)
+  // Display info
+  const displayName = message.fromInfo?.name || channelInfoCache?.name || (
+    isOwnMessage ? t('chat.header.staffFallback', '客服') : t('chat.header.visitorFallback', { suffix: String(senderChannelId || '').slice(-4), defaultValue: `访客${String(senderChannelId || '').slice(-4)}` })
+  );
   const displayAvatar = channelInfoCache?.avatar || message.fromInfo?.avatar || message.avatar || '';
-
   const hasAvatar = hasValidAvatar(displayAvatar);
   const defaultAvatar = !hasAvatar ? generateDefaultAvatar(displayName) : null;
 
-  // System message (date separator)
+  // System message
   if (isSystemMessage) {
-    return (
-      <div className="text-center text-xs text-gray-400 dark:text-gray-500">
-        {message.content}
-      </div>
-    );
+    return <div className="text-center text-xs text-gray-400 dark:text-gray-500">{message.content}</div>;
   }
 
-  const isImage = (typedPayload?.type === MessagePayloadType.IMAGE) || message.payloadType === MessagePayloadType.IMAGE || Boolean(message.metadata?.image_url || message.metadata?.image_preview_url);
+  // Get platform icon for visitor messages
+  const getPlatformIcon = () => {
+    const fromInfoExtra: any = message.fromInfo?.extra;
+    const extraType: PlatformType | undefined = fromInfoExtra?.platform_type;
+    const cacheExtra: any = channelInfoCache?.extra;
+    const cacheType: PlatformType | undefined = cacheExtra?.platform_type;
+    const type = extraType ?? cacheType ?? toPlatformType(message.platform);
+    const IconComp = getPlatformIconComponent(type);
+    const label = getPlatformLabel(type);
+    return (
+      <span title={label}>
+        <IconComp size={14} className={`w-3.5 h-3.5 inline-block ml-1 -mt-0.5 ${getPlatformColor(type)}`} />
+      </span>
+    );
+  };
 
-  // File message derived state (only need boolean for routing)
-  const isFile = (typedPayload?.type === MessagePayloadType.FILE) || message.payloadType === MessagePayloadType.FILE || Boolean(message.metadata?.file_url || (message.metadata as any)?.file_name);
-
-  // Stream loading message (type=100) - AI is starting to generate response
-  // Only show loading if it's a STREAM type AND there's no stream_data content yet
-  const isStreamType = (typedPayload?.type === MessagePayloadType.STREAM) || message.payloadType === MessagePayloadType.STREAM;
-  const hasStreamData = Boolean(message.metadata?.has_stream_data);
-  const hasContent = Boolean(message.content && message.content.trim().length > 0);
-  // Show loading only if it's STREAM type but no content has arrived yet
-  const isStreamLoading = isStreamType && !hasStreamData && !hasContent;
-
-
+  // Visitor/AI message (left side)
   if (!isOwnMessage) {
     return (
       <div className="flex flex-col items-start max-w-xl">
         <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 ml-1">
-          {displayName}{' '}
-          {(() => {
-            const fromInfoExtra: any = message.fromInfo?.extra;
-            const extraType: PlatformType | undefined = (fromInfoExtra && typeof fromInfoExtra === 'object' && 'platform_type' in fromInfoExtra)
-              ? (fromInfoExtra.platform_type as PlatformType)
-              : undefined;
-            const cacheExtra: any = channelInfoCache?.extra;
-            const cacheType: PlatformType | undefined = (cacheExtra && typeof cacheExtra === 'object' && 'platform_type' in cacheExtra)
-              ? (cacheExtra.platform_type as PlatformType)
-              : undefined;
-            const type = (extraType ?? cacheType) ?? toPlatformType(message.platform);
-            const IconComp = getPlatformIconComponent(type);
-            const label = getPlatformLabel(type);
-            return (
-              <span title={label}>
-                <IconComp size={14} className={`w-3.5 h-3.5 inline-block ml-1 -mt-0.5 ${getPlatformColor(type)}`} />
-              </span>
-            );
-          })()}
-
+          {displayName} {getPlatformIcon()}
         </div>
         <div className="flex items-start space-x-2">
           <div className="w-8 h-8 flex-shrink-0 self-start">
             {hasAvatar ? (
-              <img
-                src={displayAvatar}
-                alt="Visitor Avatar"
-                className="w-full h-full rounded-md object-cover bg-gray-200 dark:bg-gray-700"
-              />
+              <img src={displayAvatar} alt="Visitor Avatar" className="w-full h-full rounded-md object-cover bg-gray-200 dark:bg-gray-700" />
             ) : (
-              <div
-                className={`w-full h-full rounded-md flex items-center justify-center text-white font-bold text-sm ${
-                  defaultAvatar?.colorClass || 'bg-gradient-to-br from-gray-400 to-gray-500'
-                }`}
-              >
+              <div className={`w-full h-full rounded-md flex items-center justify-center text-white font-bold text-sm ${defaultAvatar?.colorClass || 'bg-gradient-to-br from-gray-400 to-gray-500'}`}>
                 {defaultAvatar?.letter || '?'}
               </div>
             )}
           </div>
-          {isStreamLoading ? (
-            <LoadingMessage isStaff={false} />
-          ) : isRichText ? (
-            <RichTextMessage message={message} isStaff={false} />
-          ) : isImage ? (
-            <ImageMessage message={message} isStaff={false} />
-          ) : isFile ? (
-            <FileMessage message={message} isStaff={false} />
-          ) : (
-            <TextMessage message={message} isStaff={false} />
-          )}
+          <MessageContent
+            message={message}
+            isStaff={false}
+            streamError={streamError}
+            streamErrorText={getStreamErrorText()}
+            isStreamLoading={isStreamLoading}
+            isRichText={isRichText}
+            isImage={isImage}
+            isFile={isFile}
+          />
         </div>
-
         <AIInfoCard aiInfo={message.aiInfo} />
-        <ReplySuggestions
-          suggestions={(message as any).suggestions}
-          onSuggestionClick={onSuggestionClick}
-        />
+        <ReplySuggestions suggestions={(message as any).suggestions} onSuggestionClick={onSuggestionClick} />
       </div>
     );
-
   }
 
+  // Own message (right side)
   return (
     <div className="flex flex-col items-end ml-auto max-w-xl">
       <div className="flex items-start flex-row-reverse mt-1">
-        {/* 自己发送的消息不显示头像 */}
-        <div>
-          {isStreamLoading ? (
-            <LoadingMessage isStaff={true} />
-          ) : isRichText ? (
-            <RichTextMessage message={message} isStaff={true} />
-          ) : isImage ? (
-            <ImageMessage message={message} isStaff={true} />
-          ) : isFile ? (
-            <FileMessage message={message} isStaff={true} />
-          ) : (
-            <TextMessage message={message} isStaff={true} />
-          )}
-        </div>
+        <MessageContent
+          message={message}
+          isStaff={true}
+          streamError={streamError}
+          streamErrorText={getStreamErrorText()}
+          isStreamLoading={isStreamLoading}
+          isRichText={isRichText}
+          isImage={isImage}
+          isFile={isFile}
+        />
         {isSending && (
-          <div
-            className="relative self-center text-gray-400 dark:text-gray-500 mr-2"
-            title={t('chat.messages.sending', '发送中...')}
-          >
+          <div className="relative self-center text-gray-400 dark:text-gray-500 mr-2" title={t('chat.messages.sending', '发送中...')}>
             <Loader2 className="w-5 h-5 animate-spin" />
           </div>
         )}
-        {hasError && (
+        {hasSendError && (
           <div
             className="relative self-center text-red-500 dark:text-red-400 cursor-pointer mr-2"
             onClick={() => setErrorOpen(v => !v)}
@@ -242,7 +233,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSuggestionClick })
             <AlertCircle className="w-5 h-5" />
             {errorOpen && (
               <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 text-xs rounded-md py-2 px-3 shadow-lg z-50 w-fit min-w-[240px] max-w-[80vw] sm:max-w-md max-h-[60vh] overflow-auto whitespace-pre-wrap break-words">
-                {errorText}
+                {getSendErrorText()}
               </div>
             )}
           </div>

@@ -1,0 +1,127 @@
+import React, { createContext, useContext, useMemo, useState, useCallback, useEffect } from 'react'
+import type { ThemeMode } from '../utils/url'
+
+// Dark mode color palette
+export const darkTheme = {
+  // Backgrounds
+  bgPrimary: '#1a1a1a',
+  bgSecondary: '#2d2d2d',
+  bgTertiary: '#3d3d3d',
+  bgInput: '#2d2d2d',
+  bgBubbleAgent: '#3d3d3d',
+  bgBubbleUser: 'var(--primary)',
+  bgHover: '#404040',
+
+  // Text colors
+  textPrimary: '#f3f4f6',
+  textSecondary: '#9ca3af',
+  textMuted: '#6b7280',
+  textOnPrimary: '#ffffff',
+
+  // Borders
+  borderPrimary: '#404040',
+  borderSecondary: '#4a4a4a',
+
+  // Accents
+  linkColor: '#60a5fa',
+  errorColor: '#f87171',
+}
+
+// Light mode color palette
+export const lightTheme = {
+  // Backgrounds
+  bgPrimary: '#ffffff',
+  bgSecondary: '#f5f6f7',
+  bgTertiary: '#f3f4f6',
+  bgInput: '#ffffff',
+  bgBubbleAgent: '#f5f6f7',
+  bgBubbleUser: 'var(--primary)',
+  bgHover: '#f3f4f6',
+
+  // Text colors
+  textPrimary: '#111827',
+  textSecondary: '#6b7280',
+  textMuted: '#9ca3af',
+  textOnPrimary: '#ffffff',
+
+  // Borders
+  borderPrimary: '#e5e7eb',
+  borderSecondary: '#eef2f4',
+
+  // Accents
+  linkColor: '#2563eb',
+  errorColor: '#ef4444',
+}
+
+export type Theme = typeof lightTheme
+
+interface ThemeContextValue {
+  mode: ThemeMode
+  theme: Theme
+  isDark: boolean
+  toggleMode: () => void
+}
+
+const ThemeContext = createContext<ThemeContextValue>({
+  mode: 'light',
+  theme: lightTheme,
+  isDark: false,
+  toggleMode: () => {},
+})
+
+// Helper to apply CSS variables to document root
+function applyThemeToRoot(theme: Theme) {
+  const root = document.documentElement
+  if (!root) return
+  try {
+    root.style.setProperty('--bg-primary', theme.bgPrimary)
+    root.style.setProperty('--bg-secondary', theme.bgSecondary)
+    root.style.setProperty('--bg-tertiary', theme.bgTertiary)
+    root.style.setProperty('--bg-input', theme.bgInput)
+    root.style.setProperty('--bg-bubble-agent', theme.bgBubbleAgent)
+    root.style.setProperty('--bg-hover', theme.bgHover)
+    root.style.setProperty('--text-primary', theme.textPrimary)
+    root.style.setProperty('--text-secondary', theme.textSecondary)
+    root.style.setProperty('--text-muted', theme.textMuted)
+    root.style.setProperty('--border-primary', theme.borderPrimary)
+    root.style.setProperty('--border-secondary', theme.borderSecondary)
+    root.style.setProperty('--link-color', theme.linkColor)
+    root.style.setProperty('--error-color', theme.errorColor)
+  } catch {}
+}
+
+export function ThemeProvider({ initialMode, children }: { initialMode: ThemeMode; children: React.ReactNode }) {
+  const [mode, setMode] = useState<ThemeMode>(initialMode)
+
+  const toggleMode = useCallback(() => {
+    setMode(prev => prev === 'dark' ? 'light' : 'dark')
+  }, [])
+
+  const theme = mode === 'dark' ? darkTheme : lightTheme
+  const isDark = mode === 'dark'
+
+  // Apply CSS variables whenever mode changes
+  useEffect(() => {
+    applyThemeToRoot(theme)
+  }, [theme])
+
+  const value = useMemo(() => ({
+    mode,
+    theme,
+    isDark,
+    toggleMode,
+  }), [mode, theme, isDark, toggleMode])
+
+  return (
+    <ThemeContext.Provider value={value}>
+      {children}
+    </ThemeContext.Provider>
+  )
+}
+
+export function useTheme() {
+  return useContext(ThemeContext)
+}
+
+export default ThemeContext
+

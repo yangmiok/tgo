@@ -123,7 +123,7 @@ async def _process_message(
     # Extract fields from payload
     message_text = payload.message_text or ""
     client_msg_no = payload.client_msg_no
-    recv_client_msg_no = uuid.uuid4().hex
+    recv_client_msg_no = client_msg_no + "-ai"
     session_id = payload.session_id or f"sess_{uuid.uuid4().hex}"
     user_id = payload.from_uid or ""
     channel_id = payload.channel_id or ""
@@ -194,7 +194,7 @@ async def _process_message(
                 await _handle_run_registry(
                     event_type=event_type,
                     event_payload=event_payload,
-                    client_msg_no=client_msg_no,
+                    client_msg_no=recv_client_msg_no,
                     project_id=project_id,
                     session_id=session_id,
                     client=client,

@@ -7126,6 +7126,55 @@
         }
       }
     },
+    "/v1/ai/runs/cancel": {
+      "post": {
+        "tags": [
+          "AI Runs"
+        ],
+        "summary": "Cancel Supervisor Run by client_msg_no (Staff)",
+        "description": "Cancel a running supervisor agent execution by client_msg_no. This endpoint is for staff (customer service agents) and requires JWT authentication. If the run has not yet started (run_id unknown), the cancellation will be queued and sent immediately on start.",
+        "operationId": "cancel_run_by_staff_v1_ai_runs_cancel_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffCancelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Cancel Run By Staff V1 Ai Runs Cancel Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/v1/ai/tools": {
       "get": {
         "tags": [
@@ -7954,6 +8003,24 @@
                         },
                         "tools": [],
                         "collections": []
+                      }
+                    }
+                  },
+                  "Personal Channel - Team": {
+                    "summary": "Personal Channel - Team",
+                    "value": {
+                      "name": "Customer Support Team",
+                      "avatar": "",
+                      "channel_id": "b2c3d4e5-6789-01ab-cdef-234567890abc-team",
+                      "channel_type": 1,
+                      "entity_type": "team",
+                      "extra": {
+                        "id": "b2c3d4e5-6789-01ab-cdef-234567890abc",
+                        "name": "Customer Support Team",
+                        "instruction": "You are a customer support team...",
+                        "model": "gpt-4",
+                        "is_default": true,
+                        "agents": []
                       }
                     }
                   },
@@ -9998,7 +10065,8 @@
           "platform_api_key",
           "client_msg_no"
         ],
-        "title": "CancelByClientNoRequest"
+        "title": "CancelByClientNoRequest",
+        "description": "Request body for visitor-facing cancel endpoint (platform API key auth)."
       },
       "ChannelInfoResponse": {
         "properties": {
@@ -10027,10 +10095,11 @@
             "enum": [
               "visitor",
               "staff",
-              "agent"
+              "agent",
+              "team"
             ],
             "title": "Entity Type",
-            "description": "Entity type represented by this channel: 'visitor', 'staff', or 'agent'"
+            "description": "Entity type represented by this channel: 'visitor', 'staff', 'agent', or 'team'"
           },
           "extra": {
             "anyOf": [
@@ -10043,7 +10112,7 @@
               }
             ],
             "title": "Extra",
-            "description": "Scenario 1 – Customer Service Channel (channel_type == 251):\n- extra contains the complete VisitorResponse as a dictionary.\n\nScenario 2 – Personal Channel - Staff (channel_type == 1 AND channel_id ends with '-staff'):\n- extra contains staff metadata: staff_id, username, role.\n\nScenario 3 – Personal Channel - Agent (channel_type == 1 AND channel_id ends with '-agent'):\n- extra contains agent metadata from AI service: id, name, instruction, model, is_default, config, team_id, tools, collections.\n\nScenario 4 – Personal Channel - Visitor (channel_type == 1 AND channel_id does NOT end with '-staff' or '-agent'):\n- Same as Scenario 1: extra contains the complete VisitorResponse as a dictionary.",
+            "description": "Scenario 1 – Customer Service Channel (channel_type == 251):\n- extra contains the complete VisitorResponse as a dictionary.\n\nScenario 2 – Personal Channel - Staff (channel_type == 1 AND channel_id ends with '-staff'):\n- extra contains staff metadata: staff_id, username, role.\n\nScenario 3 – Personal Channel - Agent (channel_type == 1 AND channel_id ends with '-agent'):\n- extra contains agent metadata from AI service: id, name, instruction, model, is_default, config, team_id, tools, collections.\n\nScenario 4 – Personal Channel - Team (channel_type == 1 AND channel_id ends with '-team'):\n- extra contains team metadata from AI service: id, name, model, instruction, expected_output, is_default, agents.\n\nScenario 5 – Personal Channel - Visitor (channel_type == 1 AND channel_id does NOT end with '-staff', '-agent', or '-team'):\n- Same as Scenario 1: extra contains the complete VisitorResponse as a dictionary.",
             "examples": [
               {
                 "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -10064,6 +10133,13 @@
                 "model": "gpt-4",
                 "name": "Customer Support Agent",
                 "tools": []
+              },
+              {
+                "agents": [],
+                "id": "b2c3d4e5-6789-01ab-cdef-234567890abc",
+                "is_default": true,
+                "model": "gpt-4",
+                "name": "Customer Support Team"
               }
             ]
           }
@@ -13097,6 +13173,33 @@
         ],
         "title": "SkipLLMConfigResponse",
         "description": "Response schema for skipping LLM configuration during setup."
+      },
+      "StaffCancelRequest": {
+        "properties": {
+          "client_msg_no": {
+            "type": "string",
+            "title": "Client Msg No",
+            "description": "Correlation ID used in streaming, i.e., client_msg_no"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason",
+            "description": "Optional reason for cancellation (for auditing)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "client_msg_no"
+        ],
+        "title": "StaffCancelRequest",
+        "description": "Request body for staff-facing cancel endpoint (JWT auth)."
       },
       "StaffCreate": {
         "properties": {

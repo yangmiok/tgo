@@ -2,11 +2,12 @@ import styled from '@emotion/styled'
 
 export const Bubble = styled.div<{self:boolean}>`
   display: inline-block; max-width: 280px; width: auto; padding: 0px 14px; border-radius: 16px; line-height: 1.5;
-  background: ${p => p.self ? 'var(--primary)' : '#f5f6f7'}; color: ${p => p.self ? '#fff' : '#111827'};
+  background: ${p => p.self ? 'var(--primary)' : 'var(--bg-bubble-agent, #f5f6f7)'};
+  color: ${p => p.self ? '#fff' : 'var(--text-primary, #111827)'};
   border-top-${p => p.self ? 'right' : 'left'}-radius: 6px;
   pre { overflow:auto; margin:8px 0; }
   code { font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; font-size: 12px; }
-  a { color: ${p => p.self ? '#fff' : '#2563eb'}; text-decoration: underline; }
+  a { color: ${p => p.self ? '#fff' : 'var(--link-color, #2563eb)'}; text-decoration: underline; }
 `
 
 export const Cursor = styled.span`
@@ -15,43 +16,59 @@ export const Cursor = styled.span`
   @keyframes blink { 0%{opacity:1} 50%{opacity:0} 100%{opacity:1} }
 `
 
+// AI Loading indicator (three bouncing dots)
+export const AILoadingDots = styled.span`
+  display: inline-flex; align-items: center; gap: 4px; padding: 8px 0;
+  span {
+    display: inline-block; width: 6px; height: 6px; background: var(--text-muted, #9ca3af); border-radius: 50%;
+    animation: bounce 1.4s ease-in-out infinite both;
+  }
+  span:nth-of-type(1) { animation-delay: -0.32s; }
+  span:nth-of-type(2) { animation-delay: -0.16s; }
+  span:nth-of-type(3) { animation-delay: 0s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+`
+
 export const ImgBox = styled.div`
-  display:inline-block; background:#f3f4f6; border-radius:12px; overflow:hidden; padding:4px; cursor:pointer;
+  display:inline-block; background: var(--bg-tertiary, #f3f4f6); border-radius:12px; overflow:hidden; padding:4px; cursor:pointer;
 `;
 export const ImgEl = styled.img`
-  display:block; width:100%; height:100%; object-fit:contain; background:#f3f4f6;
+  display:block; width:100%; height:100%; object-fit:contain; background: var(--bg-tertiary, #f3f4f6);
 `;
 
 export const Grid = styled.div`
   display: grid; gap: 6px; width: 100%;
 `;
 export const GridItem = styled.div`
-  position: relative; background:#f3f4f6; border-radius:8px; overflow:hidden; aspect-ratio:1/1; cursor:pointer;
+  position: relative; background: var(--bg-tertiary, #f3f4f6); border-radius:8px; overflow:hidden; aspect-ratio:1/1; cursor:pointer;
 `;
 export const GridImg = styled.img`
-  width:100%; height:100%; object-fit:cover; display:block; background:#f3f4f6;
+  width:100%; height:100%; object-fit:cover; display:block; background: var(--bg-tertiary, #f3f4f6);
 `;
 
 // File message UI
 export const FileCard = styled.div`
-  display:flex; align-items:center; gap:12px; padding:12px; border:1px solid #e5e7eb; border-radius:12px;
-  background:#fff; color:#111827; max-width:280px; cursor:pointer; transition: box-shadow .15s ease, background-color .15s ease;
-  &:hover{ box-shadow: 0 6px 20px rgba(0,0,0,.08); background:#f9fafb; }
+  display:flex; align-items:center; gap:12px; padding:12px; border:1px solid var(--border-primary, #e5e7eb); border-radius:12px;
+  background: var(--bg-primary, #fff); color: var(--text-primary, #111827); max-width:280px; cursor:pointer; transition: box-shadow .15s ease, background-color .15s ease;
+  &:hover{ box-shadow: 0 6px 20px rgba(0,0,0,.12); background: var(--bg-hover, #f9fafb); }
 `;
 export const FileIconBox = styled.div`
-  width:48px; height:48px; display:grid; place-items:center; border-radius:8px; background:#f3f4f6; flex:0 0 auto;
+  width:48px; height:48px; display:grid; place-items:center; border-radius:8px; background: var(--bg-tertiary, #f3f4f6); flex:0 0 auto;
 `;
 export const FileInfo = styled.div`
   flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;
 `;
 export const FileName = styled.div`
-  font-size:14px; color:#111827; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  font-size:14px; color: var(--text-primary, #111827); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 `;
 export const FileSize = styled.div`
-  font-size:12px; color:#6b7280;
+  font-size:12px; color: var(--text-secondary, #6b7280);
 `;
 export const FileAction = styled.a`
-  color:#6b7280; flex:0 0 auto; display:grid; place-items:center; padding:4px; border-radius:6px; text-decoration:none;
-  &:hover{ background:#f3f4f6; }
+  color: var(--text-secondary, #6b7280); flex:0 0 auto; display:grid; place-items:center; padding:4px; border-radius:6px; text-decoration:none;
+  &:hover{ background: var(--bg-tertiary, #f3f4f6); }
 `;
 

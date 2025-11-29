@@ -864,6 +864,12 @@
         "uploadFailedRetry": "Upload failed, click to retry",
         "uploadingWithPercent": "Uploading {{percent}}%",
         "download": "Download"
+      },
+      "stream": {
+        "timeout": "AI response timed out",
+        "error": "AI response generation failed",
+        "cancelled": "AI response cancelled",
+        "force": "AI response forcefully terminated"
       }
     },
     "input": {

@@ -48,7 +48,12 @@ export type CommandMessagePayload = {
   param: Record<string, any>
 }
 
-export type MessagePayload = TextMessagePayload | ImageMessagePayload | FileMessagePayload | MixedMessagePayload | CommandMessagePayload
+// AI Loading indicator (shown while AI is thinking/preparing response)
+export type AILoadingMessagePayload = {
+  type: 100
+}
+
+export type MessagePayload = TextMessagePayload | ImageMessagePayload | FileMessagePayload | MixedMessagePayload | CommandMessagePayload | AILoadingMessagePayload
 
 export type ChatMessage = {
   id: string

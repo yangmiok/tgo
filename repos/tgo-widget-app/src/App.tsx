@@ -5,13 +5,14 @@ import Header from './components/Header'
 import MessageList from './components/MessageList'
 import MessageInput from './components/MessageInput'
 import { useChatStore, usePlatformStore } from './store'
-import { resolveApiKey } from './utils/url'
+import { resolveApiKey, resolveMode } from './utils/url'
 import { recordVisitorActivity } from './services/visitorActivity'
+import { ThemeProvider } from './contexts/ThemeContext'
 
 
 const WidgetWrap = styled.div`
   position: absolute; inset: 0; width: 100%; height: 100%;
-  display: flex; flex-direction: column; background: #fff; border-radius: 16px; overflow: hidden;
+  display: flex; flex-direction: column; background: var(--bg-primary, #fff); border-radius: 16px; overflow: hidden;
   @media (max-width: 480px){ border-radius: 0; }
 `
 
@@ -29,6 +30,9 @@ export default function App(){
   const initPlatform = usePlatformStore(s => s.init)
   const welcomeInjected = usePlatformStore(s => s.welcomeInjected)
   const markWelcomeInjected = usePlatformStore(s => s.markWelcomeInjected)
+
+  // Resolve theme mode from URL (?mode=dark or ?mode=light)
+  const themeMode = useMemo(() => resolveMode(), [])
 
   // API base via env
   // Priority: window.ENV (runtime) > import.meta.env (build-time) > undefined
@@ -341,27 +345,29 @@ export default function App(){
   };
 
   return (
-    <WidgetWrap role="dialog" aria-label="Customer Support">
-      <Header title={title} onClose={requestClose} />
-      <Grow>
-        <MessageList messages={messages} />
-        <MessageInput onSend={onSend} />
-      </Grow>
-      <a 
-        href="https://tgo.ai" 
-        target="_blank" 
-        rel="noopener noreferrer"
-        css={css`
-          display:block; 
-          text-align:center; 
-          font-size:12px; 
-          color:#9ca3af; 
-          padding: 6px 0;
-          text-decoration: none;
-          &:hover { color: #6b7280; }
-        `}
-      >Powered by tgo.ai</a>
-    </WidgetWrap>
+    <ThemeProvider initialMode={themeMode}>
+      <WidgetWrap role="dialog" aria-label="Customer Support">
+        <Header title={title} onClose={requestClose} />
+        <Grow>
+          <MessageList messages={messages} />
+          <MessageInput onSend={onSend} />
+        </Grow>
+        <a
+          href="https://tgo.ai"
+          target="_blank"
+          rel="noopener noreferrer"
+          css={css`
+            display:block;
+            text-align:center;
+            font-size:12px;
+            color: var(--text-muted, #9ca3af);
+            padding: 6px 0;
+            text-decoration: none;
+            &:hover { color: var(--text-secondary, #6b7280); }
+          `}
+        >Powered by tgo.ai</a>
+      </WidgetWrap>
+    </ThemeProvider>
   )
 }
 

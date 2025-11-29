@@ -217,7 +217,7 @@ async def create_admin(
     # Create default AI team for this project (required, will rollback on failure)
     try:
         team_data = {
-            "name": "TGO AI Team",
+            "name": "Tgo AI Team",
             "is_default": True,
         }
         team_result = await ai_client.create_team(
@@ -279,11 +279,20 @@ async def create_admin(
                 config={},
                 is_active=False,
             )
+            
+            if pt_def.type == PlatformType.WEBSITE.value:
+                platform.config = {
+                    "position": "bottom-right",
+                    "welcome_message": "Hello! How can I help you today?",
+                    "widget_title": "TGO AI Chatbot",
+                }
+                platform.is_active = True
+                website_platform = platform
+            
             db.add(platform)
             platforms.append(platform)
 
-            if pt_def.type == PlatformType.WEBSITE.value:
-                website_platform = platform
+            
 
         db.flush()  # Ensure platform IDs are available
 

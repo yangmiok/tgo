@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import type { Platform, PlatformConfig } from '@/types';
 import { usePlatformStore } from '@/stores/platformStore';
+import { useAppSettingsStore } from '@/stores/appSettingsStore';
 import { useToast } from '@/hooks/useToast';
 import { showApiError, showSuccess } from '@/utils/toastHelpers';
 import platformsApiService from '@/services/platformsApi';
@@ -35,14 +36,23 @@ const getDefaultWebsiteConfig = (t: any): WebsiteWidgetConfig => ({
 });
 
 // Widget preview URL and origin (configurable via runtime config)
-const getWidgetPreviewUrlWithFallback = (apiKey?: string): string => {
+const getWidgetPreviewUrlWithFallback = (apiKey?: string, mode?: 'light' | 'dark'): string => {
   const url = getWidgetPreviewUrl();
   const baseUrl = url || 'http://127.0.0.1:5500/tgo-widget-app/dist/index.html';
-  
-  // Append apiKey as query parameter if provided
+
+  // Build query parameters
+  const params = new URLSearchParams();
   if (apiKey) {
+    params.set('apiKey', apiKey);
+  }
+  if (mode) {
+    params.set('mode', mode);
+  }
+
+  const queryString = params.toString();
+  if (queryString) {
     const separator = baseUrl.includes('?') ? '&' : '?';
-    return `${baseUrl}${separator}apiKey=${encodeURIComponent(apiKey)}`;
+    return `${baseUrl}${separator}${queryString}`;
   }
   return baseUrl;
 };
@@ -108,6 +118,16 @@ const WebsitePlatformConfig: React.FC<WebsitePlatformConfigProps> = ({ platform 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
   const isEnabled = platform.status === 'connected';
+
+  // Get theme mode from app settings and compute actual mode (light/dark)
+  const themeMode = useAppSettingsStore(s => s.themeMode);
+  const widgetMode: 'light' | 'dark' = useMemo(() => {
+    if (themeMode === 'system') {
+      // Follow system preference
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return themeMode;
+  }, [themeMode]);
 
   const defaultWebsiteConfig = useMemo(() => getDefaultWebsiteConfig(t), [t]);
 
@@ -457,7 +477,7 @@ const WebsitePlatformConfig: React.FC<WebsitePlatformConfigProps> = ({ platform 
         <section className="lg:w-3/5 w-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-0 rounded-lg shadow-sm border border-gray-200/60 dark:border-gray-700/60 flex min-h-0">
           <iframe
             ref={iframeRef}
-            src={getWidgetPreviewUrlWithFallback(apiKey)}
+            src={getWidgetPreviewUrlWithFallback(apiKey, widgetMode)}
             onLoad={() => setPreviewLoaded(true)}
             title="Widget Preview"
             sandbox="allow-scripts allow-same-origin"

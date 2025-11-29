@@ -60,3 +60,30 @@ export function requireApiKeyOrThrow(): string {
   return v
 }
 
+export type ThemeMode = 'light' | 'dark'
+
+/**
+ * Resolve the theme mode from URL query string (?mode=dark or ?mode=light).
+ * Returns 'light' as default if not specified or invalid.
+ */
+export function resolveMode(): ThemeMode {
+  // 1) current window
+  let v = tryGetSearchParamFrom(window, 'mode')
+  if (v === 'dark' || v === 'light') return v
+  // 2) parent window
+  try {
+    if (window.parent && window.parent !== window) {
+      v = tryGetSearchParamFrom(window.parent, 'mode')
+      if (v === 'dark' || v === 'light') return v
+    }
+  } catch (_) { /* ignore cross-origin */ }
+  // 3) top window
+  try {
+    if (window.top && window.top !== window) {
+      v = tryGetSearchParamFrom(window.top, 'mode')
+      if (v === 'dark' || v === 'light') return v
+    }
+  } catch (_) { /* ignore cross-origin */ }
+  return 'light'
+}
+

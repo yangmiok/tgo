@@ -5,31 +5,35 @@ import { useChatStore } from '../store'
 
 
 const Bar = styled.footer`
-  display:flex; align-items:center; padding:12px; border-top:0; background:#fff;
+  display:flex; align-items:center; padding:12px; border-top:0; background: var(--bg-primary, #fff);
 `
 const Card = styled.div`
   position: relative;
-  flex:1; display:flex; flex-direction:column; background:#fff; border:1px solid #e5e7eb; border-radius:24px; padding:10px 12px;
+  flex:1; display:flex; flex-direction:column; background: var(--bg-input, #fff);
+  border:1px solid var(--border-primary, #e5e7eb); border-radius:24px; padding:10px 12px;
   box-shadow: 0 8px 30px rgba(0,0,0,.06);
 `
 const Top = styled.div`display:flex; align-items:center;`
 const Input = styled.input`
   flex:1; height:24px; padding:4px 2px; border:0; outline:none; background:transparent; font-size:14px;
-  &::placeholder{ color:#9ca3af; }
+  color: var(--text-primary, #111827);
+  &::placeholder{ color: var(--text-muted, #9ca3af); }
 `
 const Actions = styled.div`display:flex; align-items:center; justify-content:space-between; margin-top:8px;`
-const Icons = styled.div`display:flex; align-items:center; gap:8px; color:#6b7280;`
+const Icons = styled.div`display:flex; align-items:center; gap:8px; color: var(--text-secondary, #6b7280);`
 const IconBtn = styled.button<{active?:boolean}>`
-  width:32px; height:32px; display:grid; place-items:center; border-radius:8px; border:0; background:${p=>p.active?'#f3f4f6':'transparent'}; color:#6b7280; cursor:pointer;
-  transition: background-color .15s ease; &:hover{ background:#f3f4f6; }
+  width:32px; height:32px; display:grid; place-items:center; border-radius:8px; border:0;
+  background:${p=>p.active?'var(--bg-tertiary, #f3f4f6)':'transparent'}; color: var(--text-secondary, #6b7280); cursor:pointer;
+  transition: background-color .15s ease; &:hover{ background: var(--bg-tertiary, #f3f4f6); }
 `
 const Send = styled.button<{active?:boolean}>`
   width:36px; height:36px; display:grid; place-items:center; border-radius:999px; border:0; cursor:pointer;
-  background: ${p=>p.active? 'var(--primary)' : '#f3f4f6'}; color: ${p=>p.active? '#fff' : '#9ca3af'};
+  background: ${p=>p.active? 'var(--primary)' : 'var(--bg-tertiary, #f3f4f6)'};
+  color: ${p=>p.active? '#fff' : 'var(--text-muted, #9ca3af)'};
 `
 
 const Interrupt = styled(Send)`
-  background: #ef4444; color: #fff;
+  background: var(--error-color, #ef4444); color: #fff;
   &:disabled{ opacity:.6; cursor:not-allowed; }
 `
 
@@ -37,19 +41,20 @@ const Interrupt = styled(Send)`
 // Emoji popover styles
 const EmojiPopover = styled.div`
   position: absolute; bottom: calc(100% + 8px); left: 8px; width: 340px; max-height: 320px; overflow: hidden;
-  background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow: 0 8px 24px rgba(0,0,0,.12); z-index:2147483002;
+  background: var(--bg-primary, #fff); border:1px solid var(--border-primary, #e5e7eb); border-radius:12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.12); z-index:2147483002;
   display:flex; flex-direction:column;
 `;
-const EmojiTabs = styled.div`display:flex; gap:6px; padding:8px 10px; border-bottom:1px solid #f3f4f6;`
+const EmojiTabs = styled.div`display:flex; gap:6px; padding:8px 10px; border-bottom:1px solid var(--bg-tertiary, #f3f4f6);`
 const EmojiTab = styled.button<{active?:boolean}>`
-  padding:6px 8px; border-radius:8px; border:0; background:${p=>p.active?'#f3f4f6':'transparent'}; cursor:pointer;
+  padding:6px 8px; border-radius:8px; border:0; background:${p=>p.active?'var(--bg-tertiary, #f3f4f6)':'transparent'}; cursor:pointer;
 `
 const EmojiGrid = styled.div`
   padding:10px; display:grid; grid-template-columns: repeat(8, 1fr); gap:6px; overflow:auto;
 `;
 const EmojiButton = styled.button`
   width: 34px; height: 34px; display:grid; place-items:center; border-radius:8px; border:0; background:transparent; cursor:pointer;
-  font-size:22px; line-height:1; &:hover{ background:#f3f4f6; }
+  font-size:22px; line-height:1; &:hover{ background: var(--bg-tertiary, #f3f4f6); }
 `;
 
 export default function MessageInput({ onSend }: { onSend(text: string): void }){

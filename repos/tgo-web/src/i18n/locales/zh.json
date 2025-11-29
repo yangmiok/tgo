@@ -770,6 +770,12 @@
         "uploadFailedRetry": "上传失败，点击重试",
         "uploadingWithPercent": "正在上传 {{percent}}%",
         "download": "下载"
+      },
+      "stream": {
+        "timeout": "AI 回复超时",
+        "error": "AI 回复生成失败",
+        "cancelled": "AI 回复已取消",
+        "force": "AI 回复被强制终止"
       }
     },
     "input": {

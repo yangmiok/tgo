@@ -28,6 +28,25 @@ const pendingUnreadTimers: Record<string, ReturnType<typeof setTimeout>> = {};
 // Track channels currently loading history to prevent duplicate requests
 const loadingHistoryChannels = new Set<string>();
 
+/**
+ * Stream End Reason constants - matches backend definitions
+ * Used to indicate why a stream was completed
+ */
+export const StreamEndReason = {
+  /** Stream completed successfully (default) */
+  SUCCESS: 0,
+  /** Stream ended due to inactivity timeout */
+  TIMEOUT: 1,
+  /** Stream ended due to an error */
+  ERROR: 2,
+  /** Stream was manually cancelled */
+  CANCELLED: 3,
+  /** Stream was forcefully ended (e.g., channel closure) */
+  FORCE: 4,
+} as const;
+
+export type StreamEndReasonType = typeof StreamEndReason[keyof typeof StreamEndReason];
+
 interface ChatState {
   // 聊天列表相关
   chats: Chat[];
@@ -39,6 +58,7 @@ interface ChatState {
   isLoading: boolean;
   isSending: boolean;
   isStreamingInProgress: boolean; // 标记是否有流消息正在进行中
+  streamingClientMsgNo: string | null; // 当前正在进行的流消息的 client_msg_no
 
   // WuKongIM 同步相关
   isSyncing: boolean;
@@ -83,6 +103,7 @@ interface ChatState {
   // AI stream message handling
   appendStreamMessageContent: (clientMsgNo: string, content: string) => void;
   markStreamMessageEnd: (clientMsgNo: string) => void;
+  cancelStreamingMessage: () => Promise<void>;
 
   // 聊天操作
   createChat: (_visitorName: string, platform: string) => void;
@@ -136,6 +157,7 @@ export const useChatStore = create<ChatState>()(
         isLoading: false,
         isSending: false,
         isStreamingInProgress: false,
+        streamingClientMsgNo: null,
 
         // WuKongIM 同步状态
         isSyncing: false,
@@ -955,9 +977,12 @@ export const useChatStore = create<ChatState>()(
           const isStreamStart = message.payloadType === MessagePayloadType.STREAM || 
             (message.payload as any)?.type === MessagePayloadType.STREAM;
           
-          if (isStreamStart) {
-            console.log('📨 Chat Store: Stream message started (type=100)');
-            set({ isStreamingInProgress: true }, false, 'handleRealtimeMessage:streamStart');
+          if (isStreamStart && clientMsgNo) {
+            console.log('📨 Chat Store: Stream message started (type=100)', { clientMsgNo });
+            set({ 
+              isStreamingInProgress: true,
+              streamingClientMsgNo: clientMsgNo
+            }, false, 'handleRealtimeMessage:streamStart');
           }
 
           // 3. If message is for the currently active conversation, add to message list
@@ -1269,24 +1294,36 @@ export const useChatStore = create<ChatState>()(
             msg.clientMsgNo === clientMsgNo
           );
 
-          // If found in real-time messages, mark as not streaming
+          // If found in real-time messages, mark as stream ended
           if (messageIndex !== -1) {
             console.log('🤖 Chat Store: Marking stream message as ended (realtime)', { clientMsgNo });
             set(
               (s) => {
                 const updatedMessages = s.messages.map((msg, idx) => {
                   if (idx === messageIndex) {
+                    const hasContent = Boolean(msg.content?.trim());
                     return {
                       ...msg,
                       metadata: {
                         ...(msg.metadata ?? {}),
-                        is_streaming: false
+                        is_streaming: false,
+                        // Mark has_stream_data based on whether content was received
+                        // This stops isStreamLoading from being true
+                        has_stream_data: hasContent,
+                        // Set stream_end to indicate stream has completed
+                        stream_end: 1,
+                        // stream_end_reason = 0 means success (no error)
+                        stream_end_reason: 0,
                       }
                     };
                   }
                   return msg;
                 });
-                return { messages: updatedMessages, isStreamingInProgress: false };
+                return {
+                  messages: updatedMessages,
+                  isStreamingInProgress: false,
+                  streamingClientMsgNo: null
+                };
               },
               false,
               'markStreamMessageEnd:realtime'
@@ -1306,11 +1343,16 @@ export const useChatStore = create<ChatState>()(
                   if (channelMessages[idx]) {
                     channelMessages[idx] = {
                       ...channelMessages[idx],
-                      end: 1 // Mark as ended
+                      end: 1, // Mark as ended
+                      end_reason: 0, // Success
                     };
                     updatedHistoricalMessages[channelKey] = channelMessages;
                   }
-                  return { historicalMessages: updatedHistoricalMessages, isStreamingInProgress: false };
+                  return {
+                    historicalMessages: updatedHistoricalMessages,
+                    isStreamingInProgress: false,
+                    streamingClientMsgNo: null
+                  };
                 },
                 false,
                 'markStreamMessageEnd:historical'
@@ -1321,7 +1363,41 @@ export const useChatStore = create<ChatState>()(
 
           // If message not found, still clear streaming state (safety measure)
           console.warn('🤖 Chat Store: Message not found for stream end', { clientMsgNo });
-          set({ isStreamingInProgress: false }, false, 'markStreamMessageEnd:notFound');
+          set({
+            isStreamingInProgress: false,
+            streamingClientMsgNo: null
+          }, false, 'markStreamMessageEnd:notFound');
+        },
+
+        /**
+         * Cancel the currently streaming message
+         */
+        cancelStreamingMessage: async () => {
+          const state = get();
+          const { streamingClientMsgNo, isStreamingInProgress } = state;
+
+          if (!isStreamingInProgress || !streamingClientMsgNo) {
+            console.warn('🤖 Chat Store: No streaming message to cancel');
+            return;
+          }
+
+          try {
+            const { aiRunsApiService } = await import('@/services/aiRunsApi');
+            await aiRunsApiService.cancelByClientNo({
+              client_msg_no: streamingClientMsgNo,
+              reason: 'User cancelled'
+            });
+            console.log('🤖 Chat Store: Stream message cancelled successfully', { clientMsgNo: streamingClientMsgNo });
+            
+            // Clear streaming state
+            set({ 
+              isStreamingInProgress: false,
+              streamingClientMsgNo: null
+            }, false, 'cancelStreamingMessage:success');
+          } catch (error) {
+            console.error('🤖 Chat Store: Failed to cancel stream message:', error);
+            throw error;
+          }
         },
 
         // Initialize store with empty data; conversations will be loaded from real APIs
@@ -1346,6 +1422,7 @@ export const useChatStore = create<ChatState>()(
             isLoading: false,
             isSending: false,
             isStreamingInProgress: false,
+            streamingClientMsgNo: null,
             isSyncing: false,
             lastSyncTime: null,
             syncVersion: 0,
