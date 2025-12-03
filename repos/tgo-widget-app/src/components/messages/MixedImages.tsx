@@ -33,7 +33,7 @@ export default function MixedImages({ images }: MixedImagesProps){
   const isSingle = visible.length === 1
   if (visible.length === 0) return null
   return (
-    <div style={{ width: 'auto', maxWidth: 280 }}>
+    <div style={{ width: 'auto', maxWidth: 'var(--bubble-max-width, 280px)' }}>
       {isSingle ? (
         <ImageMessage url={visible[0].url} w={visible[0].width} h={visible[0].height} />
       ) : (

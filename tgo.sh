@@ -466,6 +466,33 @@ is_desktop_os() {
   esac
 }
 
+# Check if domain configuration exists with non-localhost domains
+has_domain_config() {
+  local domain_config_file="./data/.tgo-domain-config"
+  if [ ! -f "$domain_config_file" ]; then
+    return 1
+  fi
+
+  # Check if any domain is configured (not empty and not localhost)
+  local web_domain widget_domain api_domain
+  web_domain=$(grep -E "^WEB_DOMAIN=" "$domain_config_file" 2>/dev/null | cut -d= -f2- || echo "")
+  widget_domain=$(grep -E "^WIDGET_DOMAIN=" "$domain_config_file" 2>/dev/null | cut -d= -f2- || echo "")
+  api_domain=$(grep -E "^API_DOMAIN=" "$domain_config_file" 2>/dev/null | cut -d= -f2- || echo "")
+
+  # Return success if any domain is configured
+  if [ -n "$web_domain" ] && [ "$web_domain" != "localhost" ]; then
+    return 0
+  fi
+  if [ -n "$widget_domain" ] && [ "$widget_domain" != "localhost" ]; then
+    return 0
+  fi
+  if [ -n "$api_domain" ] && [ "$api_domain" != "localhost" ]; then
+    return 0
+  fi
+
+  return 1
+}
+
 # Configure server host (IP or domain) and save to .env
 configure_server_host() {
   echo ""
@@ -473,10 +500,39 @@ configure_server_host() {
   echo "  Server Host Configuration"
   echo "========================================="
   echo ""
-  
+
+  # Check if user has already configured domains via ./tgo.sh config
+  if has_domain_config; then
+    echo "[INFO] Existing domain configuration detected."
+    echo "[INFO] Preserving your configured domains and environment variables."
+
+    # Show current configuration
+    local domain_config_file="./data/.tgo-domain-config"
+    local web_domain widget_domain api_domain ssl_mode
+    web_domain=$(grep -E "^WEB_DOMAIN=" "$domain_config_file" 2>/dev/null | cut -d= -f2- || echo "")
+    widget_domain=$(grep -E "^WIDGET_DOMAIN=" "$domain_config_file" 2>/dev/null | cut -d= -f2- || echo "")
+    api_domain=$(grep -E "^API_DOMAIN=" "$domain_config_file" 2>/dev/null | cut -d= -f2- || echo "")
+    ssl_mode=$(grep -E "^SSL_MODE=" "$domain_config_file" 2>/dev/null | cut -d= -f2- || echo "none")
+
+    echo ""
+    echo "  Current domains:"
+    [ -n "$web_domain" ] && echo "    - Web:    $web_domain"
+    [ -n "$widget_domain" ] && echo "    - Widget: $widget_domain"
+    [ -n "$api_domain" ] && echo "    - API:    $api_domain"
+    echo "    - SSL:    $ssl_mode"
+    echo ""
+
+    # Update env vars based on existing domain config
+    update_domain_env_vars
+
+    echo "[INFO] Environment variables synchronized with domain configuration."
+    echo ""
+    return 0
+  fi
+
   local default_host="localhost"
   local detected_ip=""
-  
+
   # Check if running on desktop OS (macOS/Windows)
   if is_desktop_os; then
     echo "[INFO] Detected desktop OS (macOS/Windows), using localhost"
@@ -484,7 +540,7 @@ configure_server_host() {
     # Only try to get public IP on Linux servers
     echo "[INFO] Detecting server public IP..."
     detected_ip=$(get_public_ip)
-    
+
     if [ -n "$detected_ip" ]; then
       default_host="$detected_ip"
       echo "[INFO] Detected public IP: $detected_ip"
@@ -492,7 +548,7 @@ configure_server_host() {
       echo "[WARN] Could not detect public IP, using localhost as default"
     fi
   fi
-  
+
   echo ""
   echo "Enter server host (IP address or domain name):"
   echo ""
@@ -501,7 +557,7 @@ configure_server_host() {
   echo "    - 192.168.1.100 (private IP)"
   echo "    - www.example.com (domain)"
   echo ""
-  
+
   # Read from /dev/tty to ensure we get input from terminal even when piped
   local user_input=""
   if [ -t 0 ]; then

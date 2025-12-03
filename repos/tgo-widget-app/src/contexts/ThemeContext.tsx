@@ -15,6 +15,18 @@ function getTargetDocument(): Document {
   return document
 }
 
+// Apply bubble max-width based on expanded state
+// Collapsed: 280px, Expanded: 70% of container width (capped at 800px for readability)
+export function applyExpandedLayout(expanded: boolean) {
+  const targetDoc = getTargetDocument()
+  const root = targetDoc.documentElement
+  if (!root) return
+  try {
+    const maxWidth = expanded ? 'min(70%, 800px)' : '280px'
+    root.style.setProperty('--bubble-max-width', maxWidth)
+  } catch {}
+}
+
 // Dark mode color palette
 export const darkTheme = {
   // Backgrounds

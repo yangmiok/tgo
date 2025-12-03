@@ -1,7 +1,12 @@
 import styled from '@emotion/styled'
 
 export const Bubble = styled.div<{self:boolean}>`
-  display: inline-block; max-width: 280px; width: auto; padding: 0px 14px; border-radius: 16px; line-height: 1.5;
+  display: inline-block;
+  max-width: var(--bubble-max-width, 280px);
+  width: auto;
+  padding: 0px 14px;
+  border-radius: 16px;
+  line-height: 1.5;
   background: ${p => p.self ? 'var(--primary)' : 'var(--bg-bubble-agent, #f5f6f7)'};
   color: ${p => p.self ? '#fff' : 'var(--text-primary, #111827)'};
   border-top-${p => p.self ? 'right' : 'left'}-radius: 6px;
@@ -77,7 +82,7 @@ export const GridImg = styled.img`
 // File message UI
 export const FileCard = styled.div`
   display:flex; align-items:center; gap:12px; padding:12px; border:1px solid var(--border-primary, #e5e7eb); border-radius:12px;
-  background: var(--bg-primary, #fff); color: var(--text-primary, #111827); max-width:280px; cursor:pointer; transition: box-shadow .15s ease, background-color .15s ease;
+  background: var(--bg-primary, #fff); color: var(--text-primary, #111827); max-width: var(--bubble-max-width, 280px); cursor:pointer; transition: box-shadow .15s ease, background-color .15s ease;
   &:hover{ box-shadow: 0 6px 20px rgba(0,0,0,.12); background: var(--bg-hover, #f9fafb); }
 `;
 export const FileIconBox = styled.div`

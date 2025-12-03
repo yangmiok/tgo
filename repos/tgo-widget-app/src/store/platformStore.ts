@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type { PlatformConfig } from '../services/platform'
 import { fetchPlatformInfo } from '../services/platform'
 import { getJSON, setJSON } from '../utils/storage'
+import { applyExpandedLayout } from '../contexts/ThemeContext'
 
 export type PlatformState = {
   loading: boolean
@@ -65,6 +66,8 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
 
   setExpanded: (v: boolean) => {
     set({ isExpanded: !!v })
+    // Update CSS variable for responsive bubble width
+    applyExpandedLayout(!!v)
     try {
       const apiBase = get()._apiBase
       const apiKey = get()._platformApiKey
@@ -95,7 +98,11 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
         const injected = !!getJSON<boolean>(WELCOME_KEY(apiBase, platformApiKey))
         if (injected) set({ welcomeInjected: true })
         const expanded = getJSON<boolean>(EXPANDED_KEY(apiBase, platformApiKey))
-        if (typeof expanded === 'boolean') set({ isExpanded: expanded })
+        if (typeof expanded === 'boolean') {
+          set({ isExpanded: expanded })
+          // Apply initial expanded layout
+          applyExpandedLayout(expanded)
+        }
       } catch (_) { /* ignore */ }
 
       const info = await fetchPlatformInfo({ apiBase, platformApiKey })
