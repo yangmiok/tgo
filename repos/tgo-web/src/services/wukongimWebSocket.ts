@@ -121,7 +121,6 @@ export class WuKongIMWebSocketService {
 
       this.isInitialized = true;
       console.log('🔌 WebSocket connection established successfully');
-      console.log("im-2----->",this.im)
 
     } catch (error) {
       console.error('🔌 WebSocket initialization failed:', error);

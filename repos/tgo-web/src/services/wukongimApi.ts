@@ -84,11 +84,11 @@ export class WuKongIMApiService extends BaseApiService {
   }
 
   /** Raw route call returning ws_addr/tcp_addr */
-  static async getRoute(uid: string): Promise<{ tcp_addr: string; ws_addr: string; }> {
+  static async getRoute(uid: string): Promise<{ tcp_addr: string; ws_addr: string;wss_addr:string }> {
     const service = new WuKongIMApiService();
     // Build endpoint with query since BaseQueryParams doesn't include uid
     const endpoint = `${service.endpoints.ROUTE}?uid=${encodeURIComponent(uid)}`;
-    return service.get<{ tcp_addr: string; ws_addr: string }>(endpoint as any);
+    return service.get<{ tcp_addr: string; ws_addr: string;wss_addr:string }>(endpoint as any);
   }
 
   /** Build full ws URL from addr value and current scheme */
@@ -108,7 +108,13 @@ export class WuKongIMApiService extends BaseApiService {
 
     try {
       const route = await this.getRoute(uid);
-      const wsUrl = this.buildWebSocketUrl(route.ws_addr);
+      let addr = route.wss_addr;
+      if (!addr || addr === "") {
+        addr = route.ws_addr;
+      }
+      
+
+      const wsUrl = this.buildWebSocketUrl(addr);
       if (wsUrl) {
         this.setCachedWsUrl(uid, wsUrl);
         return wsUrl;
