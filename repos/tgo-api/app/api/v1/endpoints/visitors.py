@@ -319,7 +319,7 @@ async def _ensure_visitor_channel(
 
     try:
         # Only visitor as initial subscriber
-        subscribers = [str(visitor.id)]
+        subscribers = [str(visitor.id)+"-vtr"]
 
         # Check if visitor is already a channel member
         existing_visitor_member = (
@@ -838,7 +838,7 @@ async def register_visitor(
     im_token = str(uuid.uuid4())
     try:
         await wukongim_client.register_or_login_user(
-            uid=str(visitor.id),
+            uid=str(visitor.id) + "-vtr",
             token=im_token,
         )
         logger.info(

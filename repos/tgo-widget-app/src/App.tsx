@@ -163,9 +163,16 @@ export default function App(){
       const uid = useChatStore.getState().myUid || myUid
       const apiKey = resolveApiKey()
       if (!cfg.apiBase || !uid || !apiKey) return
+      let visitorId = ""
+      if(uid && uid.endsWith('-vtr')){
+        visitorId = uid.substring(0, uid.length - 4)
+      }else{
+        visitorId = uid
+      }
+
       void recordVisitorActivity({
         apiBase: cfg.apiBase,
-        visitorId: uid,
+        visitorId: visitorId,
         activityType: 'session_start',
         title: 'Session started',
         context: { page_url: currentUrl, referrer: currentReferrer || '' }
@@ -186,9 +193,16 @@ export default function App(){
       const total = sessionStartAt ? Math.max(0, Math.round((now - sessionStartAt) / 1000)) : null
       console.warn('[Activity] sendSessionEnd invoked', { source, now, total, pagesVisited, currentUrl, currentTitle })
       try { console.trace('[Activity] sendSessionEnd stack trace') } catch {}
+
+      let visitorId = ""
+      if(uid && uid.endsWith('-vtr')){
+        visitorId = uid.substring(0, uid.length - 4)
+      }else{
+        visitorId = uid
+      }
       void recordVisitorActivity({
         apiBase: cfg.apiBase,
-        visitorId: uid,
+        visitorId: visitorId,
         activityType: 'session_end',
         title: 'Session ended',
         durationSeconds: total ?? undefined,
@@ -215,9 +229,15 @@ export default function App(){
           return Promise.resolve()
         }
         const usedId = currentActivityId
+        let visitorId = ""
+        if(uid && uid.endsWith('-vtr')){
+          visitorId = uid.substring(0, uid.length - 4)
+        }else{
+          visitorId = uid
+        }
         return recordVisitorActivity({
           apiBase: cfg.apiBase,
-          visitorId: uid,
+          visitorId: visitorId,
           activityType: 'page_view',
           title,
           id: usedId,
@@ -257,9 +277,15 @@ export default function App(){
 
       // Enter event: create page_view immediately (no duration); save returned activity id
       if (cfg.apiBase && uid && apiKey) {
+        let visitorId = ""
+        if(uid && uid.endsWith('-vtr')){
+          visitorId = uid.substring(0, uid.length - 4)
+        }else{
+          visitorId = uid
+        }
         const p = recordVisitorActivity({
           apiBase: cfg.apiBase,
-          visitorId: uid,
+          visitorId: visitorId,
           activityType: 'page_view',
           title: currentTitle && currentTitle.trim() ? `Visited ${currentTitle}` : 'Visited page',
           context: { page_url: currentUrl, referrer: currentReferrer || '' }
@@ -313,9 +339,15 @@ export default function App(){
         if (!title) return
         const allowed = t === 'custom_event' || t === 'form_submitted'
         if (!allowed) return
+        let visitorId = ""
+        if(uid && uid.endsWith('-vtr')){
+          visitorId = uid.substring(0, uid.length - 4)
+        }else{
+          visitorId = uid
+        }
         void recordVisitorActivity({
           apiBase: cfg.apiBase,
-          visitorId: uid,
+          visitorId: visitorId,
           activityType: t,
           title,
           description: typeof p.description === 'string' ? p.description : null,

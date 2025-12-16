@@ -225,11 +225,14 @@ async def sync_my_conversations(
             user_language=user_language,
         )
         
-        # Filter conversations to only include those with valid channels
+        # Only filter visitor (customer service) conversations by valid channels.
+        # Non-visitor conversations (e.g., personal/team/agent) should be kept.
         valid_channel_ids = {ch.channel_id for ch in channels}
         filtered_conversations = [
-            conv for conv in conversations 
-            if conv.channel_id in valid_channel_ids
+            conv
+            for conv in conversations
+            if conv.channel_type != CHANNEL_TYPE_CUSTOMER_SERVICE
+            or (conv.channel_id in valid_channel_ids)
         ]
 
         return WuKongIMConversationWithChannelsResponse(

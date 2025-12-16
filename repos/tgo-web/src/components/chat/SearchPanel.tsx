@@ -23,6 +23,28 @@ import { getChannelKey } from '@/utils/channelUtils';
 import { ChatAvatar } from '@/components/chat/ChatAvatar';
 import { ChatPlatformIcon } from '@/components/chat/ChatPlatformIcon';
 import { toPlatformType } from '@/utils/platformUtils';
+import { useChannelDisplay } from '@/hooks/useChannelDisplay';
+import { Bot } from 'lucide-react';
+import { TbBrain } from 'react-icons/tb';
+
+const parseMinutesAgo = (timestamp?: string): number | undefined => {
+  if (!timestamp) return undefined;
+  // Normalize: replace space with T, limit fractional seconds to 3 digits
+  let normalized = timestamp.replace(' ', 'T').replace(/(\.\d{3})\d+$/, '$1');
+  // If no timezone info, assume UTC and append 'Z'
+  if (!/[Zz]$/.test(normalized) && !/[+-]\d{2}:\d{2}$/.test(normalized)) {
+    normalized += 'Z';
+  }
+  let ms = Date.parse(normalized);
+  if (!Number.isFinite(ms)) {
+    // Fallback: drop fractional seconds entirely, still assume UTC
+    normalized = timestamp.replace(' ', 'T').split('.')[0] + 'Z';
+    ms = Date.parse(normalized);
+  }
+  if (!Number.isFinite(ms)) return undefined;
+  const minutes = Math.floor((Date.now() - ms) / 60000);
+  return Math.max(0, minutes);
+};
 
 export interface SearchPanelProps {
   open: boolean;
@@ -140,12 +162,103 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ open, onClose }) => {
     inputRef.current?.focus();
   }, []);
 
-  const chatsStore = useChatStore.getState();
+  const SearchMessageItem: React.FC<{ m: MessageSearchResult }> = ({ m }) => {
+    const channelId = m.channel_id || undefined;
+    const channelType = m.channel_type ?? DEFAULT_CHANNEL_TYPE;
+    const isAgentChat = channelId?.endsWith('-agent') ?? false;
+    const isTeamChat = channelId?.endsWith('-team') ?? false;
+
+    const chats = useChatStore(state => state.chats);
+
+    const { name, avatar, extra } = useChannelDisplay({
+      channelId,
+      channelType,
+      // Skip fetch for special chat types
+      skipFetch: isAgentChat || isTeamChat,
+    });
+
+    const displayName = isAgentChat
+      ? t('chat.header.agentFallback', 'AI员工')
+      : isTeamChat
+        ? t('chat.header.teamFallback', 'AI员工团队')
+        : name;
+    const displayAvatar = avatar;
+
+    const visitorExtra = extra as ChannelVisitorExtra | undefined;
+    const { visitorStatus, lastSeenMinutes } = useMemo((): { visitorStatus?: 'online' | 'offline' | 'away'; lastSeenMinutes?: number } => {
+      if (visitorExtra?.is_online !== undefined) {
+        if (visitorExtra.is_online) return { visitorStatus: 'online', lastSeenMinutes: undefined };
+        const minutes = parseMinutesAgo(visitorExtra.last_offline_time) ?? 0;
+        return { visitorStatus: 'offline', lastSeenMinutes: minutes };
+      }
+      return { visitorStatus: undefined, lastSeenMinutes: undefined };
+    }, [visitorExtra?.is_online, visitorExtra?.last_offline_time]);
+
+    const platformType: PlatformType | undefined = useMemo(() => {
+      const extraObj: any = extra;
+      const fromExtra: PlatformType | undefined =
+        (extraObj && typeof extraObj === 'object' && 'platform_type' in extraObj) ? (extraObj.platform_type as PlatformType) : undefined;
+      if (fromExtra) return fromExtra;
+      const chat = channelId ? chats.find(c => c.channelId === channelId && c.channelType === channelType) : undefined;
+      return chat ? toPlatformType(chat.platform) : undefined;
+    }, [extra, channelId, channelType, chats]);
+
+    const rawPreview = (m.preview_text || m.stream_data || (typeof m.payload === 'object' ? (m.payload as any).content : '') || '').toString();
+    const time = m.timestamp ? new Date(m.timestamp * 1000).toLocaleString(i18n.language || undefined) : '';
+    const hasPreview = rawPreview && rawPreview.trim().length > 0;
+    const previewHtml = hasPreview ? DOMPurify.sanitize(rawPreview) : '';
+
+    return (
+      <button
+        className="w-full flex items-start p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600/50 text-left"
+        onClick={() => {
+          if (channelId && typeof m.message_seq === 'number') {
+            useChatStore.getState().setTargetMessageLocation({ channelId, channelType, messageSeq: m.message_seq });
+          }
+          openConversation(channelId || undefined, channelType || undefined);
+        }}
+      >
+        <ChatAvatar
+          displayName={displayName}
+          displayAvatar={displayAvatar}
+          visitorStatus={visitorStatus}
+          lastSeenMinutes={lastSeenMinutes}
+          colorSeed={channelId}
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center min-w-0">
+              <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate mr-1 flex items-center">
+                <span className="truncate">{displayName}</span>
+                {isAgentChat ? (
+                  <Bot className="w-3.5 h-3.5 ml-1 flex-shrink-0 text-purple-500 dark:text-purple-400" />
+                ) : isTeamChat ? (
+                  <TbBrain className="w-3.5 h-3.5 ml-1 flex-shrink-0 text-green-500 dark:text-green-400" />
+                ) : platformType ? (
+                  <ChatPlatformIcon platformType={platformType} />
+                ) : null}
+              </div>
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 ml-2">{time}</div>
+          </div>
+          {hasPreview ? (
+            <div className="text-sm text-gray-900 dark:text-gray-100 line-clamp-2 whitespace-pre-wrap break-words search-html mt-0.5" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+          ) : (
+            <div className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">{t('search.noPreview', '（无预览内容）')}</div>
+          )}
+        </div>
+        <Icon name="ChevronRight" size={16} className="text-gray-300 dark:text-gray-600 ml-2" />
+      </button>
+    );
+  };
 
   // 打开既有会话（按 channelId/channelType 查找）
   const openConversation = useCallback((channelId?: string | null, channelType?: number | null) => {
+    const chatsStore = useChatStore.getState();
     if (!channelId) {
       showToast('info', t('search.toasts.notFoundTitle', '未找到会话'), t('search.toasts.noConversationInfo', '该结果缺少会话信息'));
+      // Always close search panel after selecting a result
+      onClose();
       return;
     }
     const type = channelType ?? DEFAULT_CHANNEL_TYPE;
@@ -155,15 +268,19 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ open, onClose }) => {
       onClose();
     } else {
       showToast('info', t('search.toasts.notFoundTitle', '未找到会话'), t('search.toasts.notInRecent', '该会话不在最近列表中，请尝试刷新'));
+      // Still close the panel after click (UX expectation)
+      onClose();
     }
-  }, [onClose, showToast]);
+  }, [onClose, showToast, t]);
 
   // 打开访客最近会话（若不存在则创建）
   const openVisitorConversation = useCallback((v: VisitorBasicResponse) => {
+    const chatsStore = useChatStore.getState();
     try {
       const visitorId = v?.id;
       if (!visitorId) {
         showToast('warning', t('search.toasts.incompleteVisitorInfo', '访客信息不完整'), t('search.toasts.missingVisitorId', '缺少 visitor_id'));
+        onClose();
         return;
       }
       const channelId = `${visitorId}-vtr`;
@@ -231,6 +348,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ open, onClose }) => {
     } catch (e) {
       console.error('打开访客会话失败', e);
       showApiError(showToast, e);
+      onClose();
     }
   }, [onClose, showToast]);
 
@@ -240,6 +358,8 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ open, onClose }) => {
     const plainName = (rawName || '').replace(/<[^>]*>/g, '') || fallbackName;
     const nameHtml = DOMPurify.sanitize(rawName || '');
     const platformType: PlatformType = v.platform_type ?? PlatformType.WEBSITE;
+    // Keep default avatar color consistent with conversation list (visitorId-vtr)
+    const channelIdForColor = `${v.id}-vtr`;
 
     return (
       <button
@@ -248,7 +368,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ open, onClose }) => {
         onClick={() => openVisitorConversation(v)}
       >
         {/* Avatar - use same logic as ChatList */}
-        <ChatAvatar displayName={plainName} displayAvatar={v.avatar_url || ''} visitorStatus={v.is_online ? 'online' : 'offline'} colorSeed={v.id} />
+        <ChatAvatar displayName={plainName} displayAvatar={v.avatar_url || ''} visitorStatus={v.is_online ? 'online' : 'offline'} colorSeed={channelIdForColor} />
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center min-w-0">
@@ -262,54 +382,8 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ open, onClose }) => {
   }, [openConversation]);
 
   const renderMessageItem = useCallback((m: MessageSearchResult) => {
-    const rawPreview = (m.preview_text || m.stream_data || (typeof m.payload === 'object' ? (m.payload as any).content : '') || '').toString();
-    const time = m.timestamp ? new Date(m.timestamp * 1000).toLocaleString(i18n.language || undefined) : '';
-    const hasPreview = rawPreview && rawPreview.trim().length > 0;
-    const previewHtml = hasPreview ? DOMPurify.sanitize(rawPreview) : '';
-
-    const channelId = m.channel_id || undefined;
-    const channelType = m.channel_type ?? DEFAULT_CHANNEL_TYPE;
-    const chat = channelId ? chatsStore.chats.find(c => c.channelId === channelId && c.channelType === channelType) : undefined;
-
-    const displayName = chat?.channelInfo?.name || (channelId ? t('visitor.fallbackName', '\u8bbf\u5ba2 {{suffix}}').replace('{{suffix}}', String(channelId).slice(-4)) : t('search.channel', '\u4f1a\u8bdd'));
-    const displayAvatar = chat?.channelInfo?.avatar || '';
-    const platformType: PlatformType | undefined = chat ? (() => {
-      const extra: any = chat.channelInfo?.extra;
-      const fromExtra = (extra && typeof extra === 'object' && 'platform_type' in extra) ? (extra.platform_type as PlatformType) : undefined;
-      return fromExtra ?? toPlatformType(chat.platform);
-    })() : undefined;
-
-    return (
-      <button
-        key={m.message_id_str}
-        className="w-full flex items-start p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600/50 text-left"
-        onClick={() => {
-          if (channelId && typeof m.message_seq === 'number') {
-            useChatStore.getState().setTargetMessageLocation({ channelId, channelType, messageSeq: m.message_seq });
-          }
-          openConversation(channelId || undefined, channelType || undefined);
-        }}
-      >
-        {/* Avatar - consistent with ChatList */}
-        <ChatAvatar displayName={displayName} displayAvatar={displayAvatar} colorSeed={channelId} />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center min-w-0">
-              <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate mr-1">{displayName}</div>
-              {platformType ? <ChatPlatformIcon platformType={platformType} /> : null}
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 ml-2">{time}</div>
-          </div>
-          {hasPreview ? (
-            <div className="text-sm text-gray-900 dark:text-gray-100 line-clamp-2 whitespace-pre-wrap break-words search-html mt-0.5" dangerouslySetInnerHTML={{ __html: previewHtml }} />
-          ) : (
-            <div className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">{t('search.noPreview', '\uff08\u65e0\u9884\u89c8\u5185\u5bb9\uff09')}</div>
-          )}
-        </div>
-        <Icon name="ChevronRight" size={16} className="text-gray-300 dark:text-gray-600 ml-2" />
-      </button>
-    );
-  }, [openConversation]);
+    return <SearchMessageItem m={m} />;
+  }, []);
 
   const visitorTotalPages = useMemo(() => {
     const p = data?.visitor_pagination;

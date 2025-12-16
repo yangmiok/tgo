@@ -33,15 +33,11 @@ export const ChatListItem: React.FC<ChatListItemProps> = React.memo(({ chat, isA
     channelId,
     channelType,
     // Skip fetch for special chat types
-    skipFetch: isAgentChat || isTeamChat,
+    skipFetch: false,
   });
 
   // Apply special display names for agent/team chats
-  const displayName = isAgentChat 
-    ? 'AI员工' 
-    : isTeamChat 
-      ? 'AI员工团队' 
-      : name;
+  const displayName = name;
   const displayAvatar = avatar;
 
   const parseMinutesAgo = useCallback((timestamp?: string): number | undefined => {

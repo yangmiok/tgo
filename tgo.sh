@@ -86,6 +86,158 @@ log_deploy_mode() {
 }
 
 # =============================================================================
+# WuKongIM Plugins
+# =============================================================================
+
+# IMPORTANT: WuKongIM runs in Docker, so we always install the Linux amd64 plugin asset.
+WUKONGIM_SEARCH_PLUGIN_FILE="wk.plugin.search-linux-amd64.wkp"
+
+get_wukongim_plugins_latest_tag() {
+  # Try to detect the latest release tag from GitHub/Gitee.
+  # Output: tag (e.g. v1.1.0) or empty.
+  local use_cn="${1:-false}"
+
+  if ! command -v curl >/dev/null 2>&1; then
+    echo ""
+    return 0
+  fi
+
+  if [ "$use_cn" = "true" ]; then
+    # 1) Gitee API (best-effort, no jq)
+    local api_url="https://gitee.com/api/v5/repos/WuKongDev/plugins/releases/latest"
+    local tag
+    tag=$(
+      curl -fsSL --connect-timeout 8 --max-time 12 "$api_url" 2>/dev/null | \
+        sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]\+\)".*/\1/p' | head -n 1
+    )
+    if [ -n "$tag" ]; then
+      echo "$tag"
+      return 0
+    fi
+
+    # 2) Gitee releases HTML fallback (grab first vX.Y.Z-like token)
+    tag=$(
+      curl -fsSL --connect-timeout 8 --max-time 12 "https://gitee.com/WuKongDev/plugins/releases" 2>/dev/null | \
+        grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n 1
+    )
+    if [ -n "$tag" ]; then
+      echo "$tag"
+      return 0
+    fi
+
+    echo ""
+    return 0
+  fi
+
+  # GitHub:
+  # 1) GitHub API first (best-effort)
+  local api_url="https://api.github.com/repos/WuKongIM/plugins/releases/latest"
+  local tag
+  tag=$(
+    curl -fsSL --connect-timeout 8 --max-time 12 "$api_url" 2>/dev/null | \
+      sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]\+\)".*/\1/p' | head -n 1
+  )
+  if [ -n "$tag" ]; then
+    echo "$tag"
+    return 0
+  fi
+
+  # 2) Follow redirect of /releases/latest and parse .../tag/<tag>
+  local effective
+  effective=$(curl -sSIL --connect-timeout 8 --max-time 12 -o /dev/null -w "%{url_effective}" "https://github.com/WuKongIM/plugins/releases/latest" 2>/dev/null || true)
+  tag=$(echo "$effective" | sed -n 's#.*/tag/\([^/]\+\).*#\1#p' | head -n 1)
+  if [ -n "$tag" ]; then
+    echo "$tag"
+    return 0
+  fi
+
+  echo ""
+}
+
+install_wukongim_search_plugin() {
+  # Install WuKongIM "search" plugin into ./data/wukongim/plugins before starting the container.
+  local plugins_dir="./data/wukongim/plugins"
+  local plugin_file="$WUKONGIM_SEARCH_PLUGIN_FILE"
+
+  local use_cn="false"
+  [ "${USE_CN_MIRROR:-false}" = "true" ] && use_cn="true"
+
+  # Allow manual override via .env:
+  #   WUKONGIM_PLUGIN_SEARCH_VERSION=v1.1.0
+  #   WUKONGIM_PLUGIN_SEARCH_VERSION=latest
+  local override_version=""
+  override_version=$(grep -E "^WUKONGIM_PLUGIN_SEARCH_VERSION=" ".env" 2>/dev/null | tail -n 1 | cut -d= -f2- || true)
+  override_version=$(echo "$override_version" | tr -d '\r' | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")
+
+  local tag=""
+  if [ -n "$override_version" ] && [ "$override_version" != "latest" ]; then
+    tag="$override_version"
+  else
+    tag=$(get_wukongim_plugins_latest_tag "$use_cn")
+  fi
+  tag="${tag:-v1.1.0}"  # final fallback
+
+  # Download source: GitHub for global; Gitee for CN mirror.
+  local base_url
+  if [ "$use_cn" = "true" ]; then
+    base_url="https://gitee.com/WuKongDev/plugins/releases/download/${tag}"
+  else
+    base_url="https://github.com/WuKongIM/plugins/releases/download/${tag}"
+  fi
+
+  local url="${base_url}/${plugin_file}"
+  local dest="${plugins_dir}/${plugin_file}"
+
+  echo "[INFO] Ensuring WuKongIM search plugin is installed..."
+  echo "[INFO] Plugin: $plugin_file (Docker/WuKongIM)"
+  echo "[INFO] Version: $tag"
+  echo "[INFO] Source: $url"
+
+  mkdir -p "$plugins_dir"
+
+  # Best-effort permissions: align with other data dirs strategy.
+  chmod 755 "./data/wukongim" 2>/dev/null || true
+  chmod 755 "$plugins_dir" 2>/dev/null || true
+
+  # Download if missing
+  if [ -f "$dest" ]; then
+    echo "  ✓ Plugin already exists: $dest"
+  else
+    echo "  Downloading plugin to: $dest"
+    local tmp="${dest}.tmp"
+    if command -v curl >/dev/null 2>&1; then
+      curl -fL --connect-timeout 10 --retry 3 --retry-delay 1 -o "$tmp" "$url" || {
+        rm -f "$tmp" 2>/dev/null || true
+        echo "[WARN] Failed to download WuKongIM search plugin. You can download it manually and place it under $plugins_dir"
+        echo "[WARN] GitHub releases: https://github.com/WuKongIM/plugins/releases"
+        echo "[WARN] Gitee releases (CN): https://gitee.com/WuKongDev/plugins/releases"
+        return 0
+      }
+    elif command -v wget >/dev/null 2>&1; then
+      wget -O "$tmp" "$url" || {
+        rm -f "$tmp" 2>/dev/null || true
+        echo "[WARN] Failed to download WuKongIM search plugin. You can download it manually and place it under $plugins_dir"
+        echo "[WARN] GitHub releases: https://github.com/WuKongIM/plugins/releases"
+        echo "[WARN] Gitee releases (CN): https://gitee.com/WuKongDev/plugins/releases"
+        return 0
+      }
+    else
+      echo "[WARN] Neither curl nor wget is available; cannot auto-download plugin."
+      echo "[WARN] Please download $plugin_file and put it under $plugins_dir, then run: chmod +x $plugin_file"
+      echo "[WARN] GitHub releases: https://github.com/WuKongIM/plugins/releases"
+      echo "[WARN] Gitee releases (CN): https://gitee.com/WuKongDev/plugins/releases"
+      return 0
+    fi
+
+    mv "$tmp" "$dest"
+    echo "  ✓ Downloaded: $dest"
+  fi
+
+  chmod +x "$dest" 2>/dev/null || true
+  echo "  ✓ chmod +x: $dest"
+}
+
+# =============================================================================
 # Port Detection and Auto-Allocation Functions
 # =============================================================================
 
@@ -1108,6 +1260,9 @@ cmd_install() {
   done
 
   echo "[INFO] Data directories created and permissions set."
+
+  # Install WuKongIM plugins (must be present before wukongim container starts)
+  install_wukongim_search_plugin
 
   # Initialize domain configuration and generate Nginx config
   echo "[INFO] Initializing Nginx configuration..."

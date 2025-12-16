@@ -84,6 +84,11 @@ class ChatCompletionRequest(BaseModel):
         description="额外数据，会随消息一起转发到 WuKongIM",
         examples=[{"source": "web", "page": "/product/123"}]
     )
+    forward_user_message_to_wukongim: bool = Field(
+        default=True,
+        description="是否将用户消息同时转发一份到 WuKongIM（默认开启）",
+        examples=[True],
+    )
     timeout_seconds: Optional[int] = Field(
         120,
         ge=10,
@@ -345,6 +350,31 @@ async def _process_ai_stream_to_wukongim(
                 break
     except Exception as e:
         logger.error(f"AI processing error: {e}")
+
+
+async def _send_user_message_to_wukongim(
+    *,
+    from_uid: str,
+    channel_id: str,
+    channel_type: int,
+    content: str,
+    extra: Optional[Dict[str, Any]] = None,
+) -> None:
+    """Send a copy of the user's message to WuKongIM (best-effort)."""
+    if not content:
+        return
+    try:
+        await wukongim_client.send_text_message(
+            from_uid=from_uid,
+            channel_id=channel_id,
+            channel_type=channel_type,
+            content=content,
+            extra=extra,
+            client_msg_no=f"user_{uuid4().hex}",
+        )
+    except Exception:
+        # Do not fail main flow on WuKongIM send failure
+        return
 
 
 def _extract_messages_from_openai_format(
@@ -710,6 +740,16 @@ async def chat_completion(req: ChatCompletionRequest, db: Session = Depends(get_
 
     channel_type = req.channel_type if req.channel_type is not None else CHANNEL_TYPE_CUSTOMER_SERVICE
     session_id = f"{channel_id_enc}@{channel_type}"
+
+    # 3.2) Forward a copy of user message to WuKongIM (best-effort)
+    if req.forward_user_message_to_wukongim:
+        await _send_user_message_to_wukongim(
+            from_uid=f"{visitor.id}-vtr",
+            channel_id=channel_id_enc,
+            channel_type=channel_type,
+            content=req.message,
+            extra=req.extra,
+        )
 
     # 3.5) If visitor is unassigned, try to assign staff
     assigned_staff_id = None
@@ -1360,6 +1400,15 @@ async def chat_completion_openai_compatible(
     channel_type = CHANNEL_TYPE_CUSTOMER_SERVICE
     session_id = f"{channel_id_enc}@{channel_type}"
 
+    # 4.2) Forward a copy of user message to WuKongIM (best-effort)
+    await _send_user_message_to_wukongim(
+        from_uid=f"{visitor.id}-vtr",
+        channel_id=channel_id_enc,
+        channel_type=channel_type,
+        content=user_message,
+        extra=None,
+    )
+
     # 5) If visitor is unassigned, try to assign staff
     assigned_staff_id = None
     if visitor.is_unassigned:
@@ -1622,10 +1671,21 @@ async def staff_team_chat(
     session_id = f"{channel_id}@{channel_type}"
 
     # 4) Build from_uid for staff
-    from_uid = f"{current_user.id}-staff"
+    staff_uid = f"{current_user.id}-staff"
+
+    # 4.1) Forward a copy of staff message to WuKongIM (best-effort)
+    await _send_user_message_to_wukongim(
+        from_uid=staff_uid,
+        channel_id=channel_id,
+        channel_type=channel_type,
+        content=req.message,
+        extra=None,
+    )
 
     # 5) Directly call AI service and forward to WuKongIM in background
     ai_client = AIServiceClient()
+    # AI result sender should be team/agent (not current staff)
+    ai_sender_uid = channel_id
     
     asyncio.create_task(_process_ai_stream_to_wukongim(
         ai_client=ai_client,
@@ -1633,11 +1693,11 @@ async def staff_team_chat(
         project_id=str(current_user.project_id),
         team_id=target_team_id,
         session_id=session_id,
-        user_id=from_uid,
-        channel_id=channel_id,
+        user_id=staff_uid,
+        channel_id=staff_uid,
         channel_type=channel_type,
         client_msg_no=client_msg_no,
-        from_uid=from_uid,
+        from_uid=ai_sender_uid,
         system_message=req.system_message,
         expected_output=req.expected_output,
         agent_id=target_agent_id,

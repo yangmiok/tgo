@@ -192,11 +192,11 @@ const KnowledgeBaseDetail: React.FC = () => {
       // Show appropriate message based on results
       if (result.failedCount === 0) {
         // All files uploaded successfully
-        if (files.length === 1) {
-          showFileSuccess(showToast, 'upload', files[0].name);
-        } else {
-          showToast('success', t('knowledge.upload.uploadComplete', '上传完成'), t('knowledge.upload.multipleSuccessMessage', { count: files.length, defaultValue: `${files.length} 个文件上传成功` }));
-        }
+      if (files.length === 1) {
+        showFileSuccess(showToast, 'upload', files[0].name);
+      } else {
+        showToast('success', t('knowledge.upload.uploadComplete', '上传完成'), t('knowledge.upload.multipleSuccessMessage', { count: files.length, defaultValue: `${files.length} 个文件上传成功` }));
+      }
       } else if (result.successCount > 0) {
         // Partial success
         showToast('warning', 

@@ -202,21 +202,23 @@ export const useChatStore = create<ChatState>((set, get) => ({
         cached = loadCachedVisitor(cfg.apiBase, platformApiKey)!
       }
 
-      const uid = cached.visitor_id
+      // WuKongIM 连接要求：使用 visitor_id + "-vtr" 作为 uid
+      const uid = String(cached.visitor_id || '')
+      const uidForIM = uid.endsWith('-vtr') ? uid : `${uid}-vtr`
       const target = cached.channel_id
       const channelType = mapChannelTypeToString(cached.channel_type)
       const token = cached.im_token
 
-      console.log('[Chat] Initializing IM with:', { uid, target, channelType, hasToken: !!token, token: token ? `${token.substring(0, 10)}...` : 'undefined' })
+      console.log('[Chat] Initializing IM with:', { uid: uidForIM, target, channelType, hasToken: !!token, token: token ? `${token.substring(0, 10)}...` : 'undefined' })
 
       // persist identity/channel info into store for history sync
-      set({ myUid: uid, channelId: target, channelType: cached.channel_type ?? 251 })
+      set({ myUid: uidForIM, channelId: target, channelType: cached.channel_type ?? 251 })
 
       if (!token) {
         throw new Error('[Chat] Missing im_token from visitor registration. Please check that the /v1/visitors/register API returns im_token field.')
       }
 
-      await IMService.init({ apiBase: cfg.apiBase, uid, token, target, channelType })
+      await IMService.init({ apiBase: cfg.apiBase, uid: uidForIM, token, target, channelType })
       // status events (de-duped)
       if (offStatus) { try { offStatus() } catch {} ; offStatus = null }
       offStatus = IMService.onStatus((s) => {
@@ -226,7 +228,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       if (offMsg) { try { offMsg() } catch {} ; offMsg = null }
       offMsg = IMService.onMessage((m) => {
         // skip self echoes
-        if (!m.fromUid || m.fromUid === uid) return
+        if (!m.fromUid || m.fromUid === uidForIM) return
         // prefetch staff info by sender uid (personal channel)
         try { void get().fetchStaffInfo(m.fromUid) } catch {}
         const chat: ChatMessage = {
@@ -338,6 +340,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         message: v,
         from_uid: myUid,
         wukongim_only: true,
+        forward_user_message_to_wukongim: false,
         stream: false,
       }
       if (channelId) payload.channel_id = channelId
