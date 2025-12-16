@@ -38,9 +38,9 @@ export const ChatListItem: React.FC<ChatListItemProps> = React.memo(({ chat, isA
 
   // Apply special display names for agent/team chats
   const displayName = isAgentChat 
-    ? '智能体' 
+    ? 'AI员工' 
     : isTeamChat 
-      ? '智能体团队' 
+      ? 'AI员工团队' 
       : name;
   const displayAvatar = avatar;
 

@@ -33,18 +33,18 @@ import { useProvidersStore } from '@/stores/providersStore';
 import AIProvidersApiService from '@/services/aiProvidersApi';
 import Toggle from '@/components/ui/Toggle';
 
-// Role configuration for display
-const roleConfig: Record<StaffRole, { label: string; bgColor: string; textColor: string }> = {
-  admin: { label: '管理员', bgColor: 'bg-purple-100 dark:bg-purple-900/30', textColor: 'text-purple-700 dark:text-purple-300' },
-  user: { label: '坐席', bgColor: 'bg-blue-100 dark:bg-blue-900/30', textColor: 'text-blue-700 dark:text-blue-300' },
-  agent: { label: 'AI代理', bgColor: 'bg-green-100 dark:bg-green-900/30', textColor: 'text-green-700 dark:text-green-300' },
+// Role configuration for display (colors only, labels from i18n)
+const roleStyleConfig: Record<StaffRole, { bgColor: string; textColor: string }> = {
+  admin: { bgColor: 'bg-purple-100 dark:bg-purple-900/30', textColor: 'text-purple-700 dark:text-purple-300' },
+  user: { bgColor: 'bg-blue-100 dark:bg-blue-900/30', textColor: 'text-blue-700 dark:text-blue-300' },
+  agent: { bgColor: 'bg-green-100 dark:bg-green-900/30', textColor: 'text-green-700 dark:text-green-300' },
 };
 
-// Status configuration for display
-const statusConfig: Record<StaffStatus, { label: string; dotColor: string }> = {
-  online: { label: '在线', dotColor: 'bg-green-500' },
-  offline: { label: '离线', dotColor: 'bg-gray-400' },
-  busy: { label: '忙碌', dotColor: 'bg-yellow-500' },
+// Status configuration for display (colors only, labels from i18n)
+const statusStyleConfig: Record<StaffStatus, { dotColor: string }> = {
+  online: { dotColor: 'bg-green-500' },
+  offline: { dotColor: 'bg-gray-400' },
+  busy: { dotColor: 'bg-yellow-500' },
 };
 
 // Form data type
@@ -768,7 +768,7 @@ const StaffSettings: React.FC = () => {
           <div className="text-sm text-blue-800 dark:text-blue-200">
             <p className="font-medium mb-1">{t('settings.staff.description', '人工坐席说明')}</p>
             <p className="text-blue-700 dark:text-blue-300">
-              {t('settings.staff.descriptionText', '当AI智能体无法解决用户问题时，系统会自动将对话分配给人工坐席。人工坐席可以接管对话，为用户提供更专业的人工服务。')}
+              {t('settings.staff.descriptionText', '当AI员工无法解决用户问题时，系统会自动将对话分配给人工坐席。人工坐席可以接管对话，为用户提供更专业的人工服务。')}
             </p>
           </div>
         </div>
@@ -1130,10 +1130,10 @@ const StaffSettings: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`
                         inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                        ${roleConfig[staff.role as StaffRole]?.bgColor || 'bg-gray-100 dark:bg-gray-700'}
-                        ${roleConfig[staff.role as StaffRole]?.textColor || 'text-gray-700 dark:text-gray-300'}
+                        ${roleStyleConfig[staff.role as StaffRole]?.bgColor || 'bg-gray-100 dark:bg-gray-700'}
+                        ${roleStyleConfig[staff.role as StaffRole]?.textColor || 'text-gray-700 dark:text-gray-300'}
                       `}>
-                        {roleConfig[staff.role as StaffRole]?.label || staff.role}
+                        {t(`settings.staff.roles.${staff.role}`, staff.role)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -1143,9 +1143,9 @@ const StaffSettings: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${statusConfig[staff.status as StaffStatus]?.dotColor || 'bg-gray-400'}`} />
+                        <span className={`w-2 h-2 rounded-full ${statusStyleConfig[staff.status as StaffStatus]?.dotColor || 'bg-gray-400'}`} />
                         <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {statusConfig[staff.status as StaffStatus]?.label || staff.status}
+                          {t(`settings.staff.statuses.${staff.status}`, staff.status)}
                         </span>
                       </div>
                     </td>

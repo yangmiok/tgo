@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import { useChatStore } from '../stores/chatStore';
 import { useChannelStore } from '../stores/channelStore';
+import { useUIStore } from '../stores/uiStore';
 import {
   wukongimWebSocketService,
   ConnectionStatus,
@@ -10,6 +11,7 @@ import {
   type VisitorProfileUpdatedEvent,
 } from '../services/wukongimWebSocket';
 import { WuKongIMApiService } from '../services/wukongimApi';
+import { notificationService, type NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES } from '../services/notificationService';
 import { Message } from '../types';
 import { isWebSocketAutoConnectDisabled } from '@/utils/config';
 
@@ -26,6 +28,18 @@ export const WebSocketManager: React.FC = () => {
   const appendStreamMessageContent = useChatStore(state => state.appendStreamMessageContent);
   const markStreamMessageEnd = useChatStore(state => state.markStreamMessageEnd);
   const activeChat = useChatStore(state => state.activeChat);
+  
+  // Get notification preferences from uiStore
+  const uiPreferences = useUIStore(state => state.preferences);
+
+  /**
+   * Handle notification click - navigate to the conversation
+   * Using window.location because WebSocketManager may be rendered outside Router context
+   */
+  const handleNotificationClick = React.useCallback((channelId: string, channelType: number) => {
+    console.log('🔔 WebSocket Manager: Notification clicked, navigating to:', { channelId, channelType });
+    window.location.href = `/chat/${channelType}/${channelId}`;
+  }, []);
 
   /**
    * Handle incoming real-time messages
@@ -54,12 +68,30 @@ export const WebSocketManager: React.FC = () => {
       console.log('🔌 WebSocket Manager: Delegating to chat store handleRealtimeMessage');
       handleRealtimeMessage(message);
       console.log('🔌 WebSocket Manager: Real-time message processing completed successfully');
+      
+      // Check and send notification
+      const notificationPreferences: NotificationPreferences = {
+        notificationEnabled: uiPreferences.notificationEnabled ?? DEFAULT_NOTIFICATION_PREFERENCES.notificationEnabled,
+        notificationSound: uiPreferences.notificationSound ?? DEFAULT_NOTIFICATION_PREFERENCES.notificationSound,
+        notifyOnBackground: uiPreferences.notifyOnBackground ?? DEFAULT_NOTIFICATION_PREFERENCES.notifyOnBackground,
+        notifyOnOtherConversation: uiPreferences.notifyOnOtherConversation ?? DEFAULT_NOTIFICATION_PREFERENCES.notifyOnOtherConversation,
+        notifyOnNewVisitor: uiPreferences.notifyOnNewVisitor ?? DEFAULT_NOTIFICATION_PREFERENCES.notifyOnNewVisitor,
+      };
+      
+      notificationService.checkAndNotify(
+        message,
+        activeChat,
+        notificationPreferences,
+        handleNotificationClick
+      );
     } catch (error) {
       console.error('🔌 WebSocket Manager: Error in handleRealtimeMessage:', error);
     }
   }, [
-    activeChat?.channelId,
-    handleRealtimeMessage
+    activeChat,
+    handleRealtimeMessage,
+    uiPreferences,
+    handleNotificationClick
   ]);
 
   // Track if this is a reconnection (not the initial connection)

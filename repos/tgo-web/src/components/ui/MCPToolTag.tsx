@@ -15,7 +15,7 @@ interface MCPToolTagProps {
 
 /**
  * MCP工具标签组件
- * 用于显示智能体关联的MCP工具
+ * 用于显示AI员工关联的MCP工具
  */
 const MCPToolTag: React.FC<MCPToolTagProps> = ({
   toolId,

@@ -57,13 +57,13 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, onAction, onToolClick }) =
     setIsDeleting(true);
     try {
       await deleteAgent(agent.id);
-      showToast('success', t('agents.messages.deleteSuccess', '删除成功'), t('agents.messages.deleteSuccessDesc', `智能体 "${agent.name}" 已删除`, { name: agent.name }));
+      showToast('success', t('agents.messages.deleteSuccess', '删除成功'), t('agents.messages.deleteSuccessDesc', `AI员工 "${agent.name}" 已删除`, { name: agent.name }));
       setShowDeleteConfirm(false);
       // Optionally notify parent component about the deletion
       onAction?.('deleted', agent);
     } catch (error) {
       console.error('Failed to delete agent:', error);
-      showToast('error', t('agents.messages.deleteFailed', '删除失败'), t('agents.messages.deleteFailedDesc', '删除智能体时发生错误'));
+      showToast('error', t('agents.messages.deleteFailed', '删除失败'), t('agents.messages.deleteFailedDesc', '删除AI员工时发生错误'));
     } finally {
       setIsDeleting(false);
     }
@@ -130,7 +130,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, onAction, onToolClick }) =
             </div>
             <div>
               <h3 className="font-semibold text-gray-800 dark:text-gray-100">{agent.name}</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{agent.role || t('agents.card.defaultRole', '智能体')}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{agent.role || t('agents.card.defaultRole', 'AI员工')}</p>
             </div>
           </div>
           <div className="flex items-center">
@@ -241,21 +241,21 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, onAction, onToolClick }) =
       <div className="mt-4 pt-3 border-t border-gray-200/60 dark:border-gray-700 flex justify-end space-x-3">
         <button
           className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30"
-          title={t('agents.card.chatTooltip', '与智能体对话')}
+          title={t('agents.card.chatTooltip', '与AI员工对话')}
           onClick={handleChatWithAgent}
         >
           <MessageCircle className="w-4 h-4" />
         </button>
         <button
           className="text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200 p-1 rounded hover:bg-green-50 dark:hover:bg-green-900/30"
-          title={t('agents.card.editTooltip', '编辑智能体')}
+          title={t('agents.card.editTooltip', '编辑AI员工')}
           onClick={() => handleAction('edit')}
         >
           <Pencil className="w-4 h-4" />
         </button>
         <button
           className="transition-colors duration-200 p-1 rounded text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
-          title={t('agents.card.deleteTooltip', '删除智能体')}
+          title={t('agents.card.deleteTooltip', '删除AI员工')}
           onClick={() => handleAction('delete')}
         >
           <Trash2 className="w-4 h-4" />
@@ -265,8 +265,8 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, onAction, onToolClick }) =
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={showDeleteConfirm}
-        title={t('agents.modal.delete.title', '删除智能体')}
-        message={t('agents.modal.delete.message', `确定要删除智能体 "${agent.name}" 吗？此操作不可撤销。`, { name: agent.name })}
+        title={t('agents.modal.delete.title', '删除AI员工')}
+        message={t('agents.modal.delete.message', `确定要删除AI员工 "${agent.name}" 吗？此操作不可撤销。`, { name: agent.name })}
         confirmText={t('agents.modal.delete.confirm', '删除')}
         cancelText={t('agents.modal.delete.cancel', '取消')}
         confirmVariant="danger"

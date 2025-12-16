@@ -79,6 +79,37 @@
       "about": "About",
       "logout": "Logout"
     },
+    "profile": {
+      "title": "Profile",
+      "subtitle": "View and manage your personal information",
+      "loadError": "Failed to load profile",
+      "username": "Username",
+      "status": "Status",
+      "description": "Bio",
+      "serviceStatus": "Service Status",
+      "servicePaused": "Service paused",
+      "serviceResumed": "Service resumed",
+      "toggleError": "Failed to toggle service status",
+      "servicePausedLabel": "Service Paused",
+      "serviceActiveLabel": "Active",
+      "servicePausedDesc": "You will not be assigned new visitors while paused, existing conversations are not affected",
+      "serviceActiveDesc": "System will assign new visitors to you based on assignment rules",
+      "resumeService": "Resume Service",
+      "pauseService": "Pause Service",
+      "accountInfo": "Account Information",
+      "createdAt": "Created At",
+      "updatedAt": "Updated At",
+      "roles": {
+        "admin": "Admin",
+        "user": "Agent",
+        "agent": "AI Agent"
+      },
+      "statuses": {
+        "online": "Online",
+        "offline": "Offline",
+        "busy": "Busy"
+      }
+    },
     "staff": {
       "title": "Human Agents",
       "addStaff": "Add Staff",
@@ -91,6 +122,7 @@
       "tableStatus": "Status",
       "tableDescription": "Description",
       "tableCreated": "Created At",
+      "tableServiceActive": "Service",
       "tableActions": "Actions",
       "noResults": "No matching staff found",
       "empty": "No staff yet, click \"Add Staff\" to create",
@@ -118,6 +150,21 @@
       "deleteSuccess": "Staff deleted successfully",
       "saveError": "Save failed",
       "deleteError": "Delete failed",
+      "roles": {
+        "admin": "Admin",
+        "user": "Agent",
+        "agent": "AI Agent"
+      },
+      "statuses": {
+        "online": "Online",
+        "offline": "Offline",
+        "busy": "Busy"
+      },
+      "serviceStopped": "Service stopped for this agent",
+      "serviceStarted": "Service started for this agent",
+      "toggleActiveError": "Failed to toggle service status",
+      "clickToStop": "Click to stop service",
+      "clickToStart": "Click to start service",
       "description": "About Human Agents",
       "descriptionText": "When AI agents cannot resolve user issues, the system automatically assigns conversations to human agents. Human agents can take over conversations to provide more professional human support.",
       "assignmentRules": "Assignment Rules",
@@ -203,8 +250,54 @@
     "storage": {
       "title": "Storage",
       "comingSoon": "Cache management, storage usage statistics, etc. Coming soon..."
-    }
-,
+    },
+    "notifications": {
+      "title": "Notifications",
+      "notSupported": "Your browser does not support desktop notifications",
+      "permission": {
+        "title": "Notification Permission",
+        "granted": "Authorized",
+        "denied": "Denied",
+        "default": "Not Set",
+        "grantedDesc": "You can receive desktop notifications",
+        "deniedDesc": "Please allow notification permission in browser settings",
+        "defaultDesc": "Click the button to request notification permission",
+        "request": "Request Permission",
+        "requesting": "Requesting..."
+      },
+      "toggles": {
+        "title": "Notification Settings",
+        "desktop": {
+          "title": "Desktop Notifications",
+          "description": "Show notifications in system notification center when new messages arrive"
+        },
+        "sound": {
+          "title": "Sound Alerts",
+          "description": "Play notification sound when new messages arrive"
+        }
+      },
+      "scenarios": {
+        "title": "Notification Scenarios",
+        "background": {
+          "title": "Background Notifications",
+          "description": "Send notifications when page is not visible (tab switched or minimized)"
+        },
+        "otherConversation": {
+          "title": "Other Conversation Messages",
+          "description": "Send notifications when receiving messages from conversations other than the current one"
+        },
+        "newVisitor": {
+          "title": "New Visitor Notifications",
+          "description": "Send notifications when new visitors enter the queue"
+        }
+      },
+      "test": {
+        "title": "Test Notification",
+        "description": "Send a test notification to verify the feature is working correctly",
+        "button": "Send Test"
+      },
+      "tip": "Tip: Notification feature requires browser permission. If you denied the permission request, you need to manually allow notifications for this site in your browser settings."
+    },
     "models": {
       "defaults": {
         "title": "Default Models",
@@ -1214,6 +1307,9 @@
         "saturday": "Saturday"
       }
     },
+    "empty": {
+      "selectConversation": "Select a chat to start conversation"
+    },
     "list": {
       "searchPlaceholder": "Search",
       "searchAria": "Search conversations",
@@ -1225,7 +1321,18 @@
     },
     "header": {
       "staffFallback": "Agent",
-      "visitorFallback": "Visitor {{suffix}}"
+      "visitorFallback": "Visitor {{suffix}}",
+      "agentFallback": "AI Employee",
+      "teamFallback": "AI Employee Team",
+      "agentTooltip": "AI Employee Chat",
+      "endChat": "End Chat",
+      "transfer": "Transfer",
+      "transferTooltip": "Transfer to another agent",
+      "transferSuccess": "Transferred to {{name}}",
+      "transferError": "Transfer failed",
+      "transferTo": "Transfer to",
+      "noStaffAvailable": "No staff available",
+      "loadingStaff": "Loading..."
     },
     "suggestions": {
       "label": "✨ Suggestions:"

@@ -265,7 +265,7 @@ const KnowledgeBase: React.FC = () => {
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">{t('knowledge.manage', '知识库管理')}</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t('knowledge.subtitle', '管理可供智能体使用的知识来源。')}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t('knowledge.subtitle', '管理可供AI员工使用的知识来源。')}</p>
           </div>
           <div className="flex items-center space-x-3">
             <button

@@ -67,9 +67,9 @@ const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({ activeChat, onEndCha
   
   // 获取显示名称
   const displayName = isAgentChat 
-    ? t('chat.header.agentFallback', '智能体')
+    ? t('chat.header.agentFallback', 'AI员工')
     : isTeamChat
-      ? t('chat.header.teamFallback', '智能体团队')
+      ? t('chat.header.teamFallback', 'AI员工团队')
       : channelName;
 
   // 结束聊天处理
@@ -185,7 +185,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({ activeChat, onEndCha
         <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center">
           <span>{displayName}</span>
           {isAgentChat ? (
-            <span title={t('chat.header.agentTooltip', '智能体会话')}>
+            <span title={t('chat.header.agentTooltip', 'AI员工会话')}>
               <Bot className="w-4 h-4 inline-block ml-1.5 -mt-0.5 text-purple-500 dark:text-purple-400" />
             </span>
           ) : isTeamChat ? (

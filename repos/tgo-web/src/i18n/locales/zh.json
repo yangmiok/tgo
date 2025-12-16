@@ -79,6 +79,37 @@
       "about": "关于",
       "logout": "退出登录"
     },
+    "profile": {
+      "title": "个人资料",
+      "subtitle": "查看和管理你的个人信息",
+      "loadError": "加载个人资料失败",
+      "username": "用户名",
+      "status": "状态",
+      "description": "简介",
+      "serviceStatus": "接待服务状态",
+      "servicePaused": "已暂停接待服务",
+      "serviceResumed": "已恢复接待服务",
+      "toggleError": "切换服务状态失败",
+      "servicePausedLabel": "已暂停接待",
+      "serviceActiveLabel": "正常接待中",
+      "servicePausedDesc": "暂停后将不会被分配新的访客，已有会话不受影响",
+      "serviceActiveDesc": "系统会根据分配规则将新访客分配给你",
+      "resumeService": "恢复接待",
+      "pauseService": "暂停接待",
+      "accountInfo": "账户信息",
+      "createdAt": "创建时间",
+      "updatedAt": "更新时间",
+      "roles": {
+        "admin": "管理员",
+        "user": "坐席",
+        "agent": "AI代理"
+      },
+      "statuses": {
+        "online": "在线",
+        "offline": "离线",
+        "busy": "忙碌"
+      }
+    },
     "staff": {
       "title": "人工坐席",
       "addStaff": "添加坐席",
@@ -91,6 +122,7 @@
       "tableStatus": "状态",
       "tableDescription": "描述",
       "tableCreated": "创建时间",
+      "tableServiceActive": "服务",
       "tableActions": "操作",
       "noResults": "没有找到匹配的坐席",
       "empty": "暂无坐席，点击\"添加坐席\"创建",
@@ -108,7 +140,7 @@
       "confirmPassword": "确认密码",
       "confirmPasswordPlaceholder": "请再次输入密码",
       "role": "角色",
-      "roleHint": "普通坐席可处理客服对话，AI代理可关联AI智能体",
+      "roleHint": "普通坐席可处理客服对话，AI代理可关联AI员工",
       "status": "状态",
       "deleteConfirmTitle": "确认删除",
       "deleteConfirmMessage": "确定要删除坐席 \"{{name}}\" 吗？此操作无法撤销。",
@@ -118,8 +150,23 @@
       "deleteSuccess": "坐席删除成功",
       "saveError": "保存失败",
       "deleteError": "删除失败",
+      "roles": {
+        "admin": "管理员",
+        "user": "坐席",
+        "agent": "AI代理"
+      },
+      "statuses": {
+        "online": "在线",
+        "offline": "离线",
+        "busy": "忙碌"
+      },
+      "serviceStopped": "已停止该坐席的服务",
+      "serviceStarted": "已开启该坐席的服务",
+      "toggleActiveError": "切换服务状态失败",
+      "clickToStop": "点击停止服务",
+      "clickToStart": "点击开启服务",
       "description": "人工坐席说明",
-      "descriptionText": "当AI智能体无法解决用户问题时，系统会自动将对话分配给人工坐席。人工坐席可以接管对话，为用户提供更专业的人工服务。",
+      "descriptionText": "当AI员工无法解决用户问题时，系统会自动将对话分配给人工坐席。人工坐席可以接管对话，为用户提供更专业的人工服务。",
       "assignmentRules": "分配规则",
       "assignmentRulesHint": "配置人工坐席的分配规则。系统将使用大模型根据此提示词来智能分配对话给最合适的坐席。",
       "serviceTime": "服务时间",
@@ -203,8 +250,54 @@
     "storage": {
       "title": "存储管理",
       "comingSoon": "缓存管理、存储使用统计等，敬请期待…"
-    }
-,
+    },
+    "notifications": {
+      "title": "消息通知",
+      "notSupported": "您的浏览器不支持桌面通知功能",
+      "permission": {
+        "title": "通知权限",
+        "granted": "已授权",
+        "denied": "已拒绝",
+        "default": "未设置",
+        "grantedDesc": "可以接收桌面通知",
+        "deniedDesc": "请在浏览器设置中允许通知权限",
+        "defaultDesc": "点击按钮请求通知权限",
+        "request": "请求权限",
+        "requesting": "请求中..."
+      },
+      "toggles": {
+        "title": "通知设置",
+        "desktop": {
+          "title": "桌面通知",
+          "description": "收到新消息时在系统通知中心显示通知"
+        },
+        "sound": {
+          "title": "声音提醒",
+          "description": "收到新消息时播放提示音"
+        }
+      },
+      "scenarios": {
+        "title": "通知场景",
+        "background": {
+          "title": "后台通知",
+          "description": "当页面不可见（切换标签页或最小化）时发送通知"
+        },
+        "otherConversation": {
+          "title": "其他会话消息",
+          "description": "当收到非当前查看会话的消息时发送通知"
+        },
+        "newVisitor": {
+          "title": "新访客通知",
+          "description": "当有新访客进入排队时发送通知"
+        }
+      },
+      "test": {
+        "title": "测试通知",
+        "description": "发送一条测试通知以验证功能是否正常",
+        "button": "发送测试"
+      },
+      "tip": "提示：通知功能需要浏览器授权。如果您拒绝了权限请求，需要在浏览器设置中手动允许本站点的通知权限。"
+    },
     "models": {
       "defaults": {
         "title": "默认模型",
@@ -429,25 +522,25 @@
     "links": "相关链接"
   },
   "agents": {
-    "title": "智能体团队管理",
-    "subtitle": "管理您的AI智能体",
+    "title": "AI员工团队管理",
+    "subtitle": "管理您的AI员工",
     "actions": {
-      "create": "创建智能体",
-      "edit": "编辑智能体",
-      "delete": "删除智能体",
-      "copy": "复制智能体",
+      "create": "创建AI员工",
+      "edit": "编辑AI员工",
+      "delete": "删除AI员工",
+      "copy": "复制AI员工",
       "refresh": "刷新",
       "retry": "重试",
       "view": "查看详情",
       "viewMore": "查看更多",
       "collapse": "收起",
       "teamChat": "团队对话",
-      "teamChatTooltip": "与智能体团队对话",
-      "teamChatNoAgents": "请先创建智能体",
+      "teamChatTooltip": "与AI员工团队对话",
+      "teamChatNoAgents": "请先创建AI员工",
       "teamInfo": "团队信息"
     },
     "form": {
-      "name": "智能体名称",
+      "name": "AI员工名称",
       "description": "描述",
       "detailedDescription": "详细描述",
       "profession": "职业",
@@ -464,54 +557,54 @@
     },
     "messages": {
       "loadFailed": "加载失败",
-      "loadFailedDesc": "无法加载智能体列表，请稍后重试",
+      "loadFailedDesc": "无法加载AI员工列表，请稍后重试",
       "refreshSuccess": "刷新成功",
-      "refreshSuccessDesc": "智能体列表已更新",
+      "refreshSuccessDesc": "AI员工列表已更新",
       "refreshFailed": "刷新失败",
-      "refreshFailedDesc": "无法刷新智能体列表，请稍后重试",
+      "refreshFailedDesc": "无法刷新AI员工列表，请稍后重试",
       "retryFailed": "重试失败",
-      "retryFailedDesc": "无法加载智能体列表，请稍后重试",
+      "retryFailedDesc": "无法加载AI员工列表，请稍后重试",
       "createSuccess": "创建成功",
-      "createSuccessDesc": "智能体 \"{{name}}\" 已成功创建",
+      "createSuccessDesc": "AI员工 \"{{name}}\" 已成功创建",
       "createFailed": "创建失败",
       "updateSuccess": "更新成功",
-      "updateSuccessDesc": "智能体 \"{{name}}\" 已成功更新",
+      "updateSuccessDesc": "AI员工 \"{{name}}\" 已成功更新",
       "updateFailed": "更新失败",
       "deleteSuccess": "删除成功",
-      "deleteSuccessDesc": "智能体 \"{{name}}\" 已删除",
+      "deleteSuccessDesc": "AI员工 \"{{name}}\" 已删除",
       "deleteFailed": "删除失败",
-      "deleteFailedDesc": "删除智能体时发生错误",
+      "deleteFailedDesc": "删除AI员工时发生错误",
       "copySuccess": "复制成功",
-      "copySuccessDesc": "智能体 \"{{name}}\" 已成功复制",
+      "copySuccessDesc": "AI员工 \"{{name}}\" 已成功复制",
       "copyFailed": "复制失败",
-      "copyFailedDesc": "复制智能体时发生错误",
+      "copyFailedDesc": "复制AI员工时发生错误",
       "statusUpdateSuccess": "刷新成功",
-      "statusUpdateSuccessDesc": "智能体 \"{{name}}\" 状态已更新",
+      "statusUpdateSuccessDesc": "AI员工 \"{{name}}\" 状态已更新",
       "statusUpdateFailed": "刷新失败",
-      "statusUpdateFailedDesc": "更新智能体状态时发生错误",
+      "statusUpdateFailedDesc": "更新AI员工状态时发生错误",
       "noTeam": "团队未加载",
       "noTeamDesc": "请稍后重试",
       "noAgentsForTeamChat": "无法发起团队对话",
-      "noAgentsForTeamChatDesc": "请先创建至少一个智能体"
+      "noAgentsForTeamChatDesc": "请先创建至少一个AI员工"
     },
     "teamChat": {
-      "defaultName": "智能体团队"
+      "defaultName": "AI员工团队"
     },
     "empty": {
-      "title": "暂无智能体",
-      "description": "点击「创建智能体」按钮开始创建您的第一个智能体"
+      "title": "暂无AI员工",
+      "description": "点击「创建AI员工」按钮开始创建您的第一个AI员工"
     },
     "error": {
       "title": "加载失败",
       "retry": "重试"
     },
     "card": {
-      "defaultRole": "智能体",
+      "defaultRole": "AI员工",
       "noTools": "未关联工具",
       "noKnowledgeBases": "未关联知识库",
-      "chatTooltip": "与智能体对话",
-      "editTooltip": "编辑智能体",
-      "deleteTooltip": "删除智能体",
+      "chatTooltip": "与AI员工对话",
+      "editTooltip": "编辑AI员工",
+      "deleteTooltip": "删除AI员工",
       "llmLabel": "LLM"
     },
     "copy": {
@@ -524,17 +617,17 @@
     },
     "modal": {
       "create": {
-        "title": "创建智能体"
+        "title": "创建AI员工"
       },
       "edit": {
-        "title": "编辑智能体"
+        "title": "编辑AI员工"
       },
       "detail": {
-        "title": "智能体详情"
+        "title": "AI员工详情"
       },
       "delete": {
-        "title": "删除智能体",
-        "message": "确定要删除智能体 \"{{name}}\" 吗？此操作不可撤销。",
+        "title": "删除AI员工",
+        "message": "确定要删除AI员工 \"{{name}}\" 吗？此操作不可撤销。",
         "confirm": "删除",
         "cancel": "取消"
       }
@@ -543,13 +636,13 @@
     "create": {
       "sections": {
         "modelConfig": "模型配置",
-        "description": "智能体描述",
+        "description": "AI员工描述",
         "mcpTools": "MCP工具"
       },
       "placeholders": {
-        "name": "请输入智能体名称",
+        "name": "请输入AI员工名称",
         "profession": "例如：客服专员、技术支持、销售顾问",
-        "description": "请详细描述智能体的功能、职责和特点，例如：负责处理客户咨询，提供产品信息和技术支持..."
+        "description": "请详细描述AI员工的功能、职责和特点，例如：负责处理客户咨询，提供产品信息和技术支持..."
       },
       "models": {
         "loading": "正在加载模型...",
@@ -567,9 +660,9 @@
     }
     ,
     "edit": {
-      "loading": "加载智能体详情...",
-      "loadAgentError": "无法加载智能体详情，请稍后重试",
-      "updateFailedUnknown": "更新智能体时发生未知错误",
+      "loading": "加载AI员工详情...",
+      "loadAgentError": "无法加载AI员工详情，请稍后重试",
+      "updateFailedUnknown": "更新AI员工时发生未知错误",
       "tools": {
         "pendingNewTool": "待保存的新工具",
         "missingTitle": "工具信息缺失",
@@ -608,7 +701,7 @@
       "modelHint": "选择团队使用的默认 LLM 模型",
       "instruction": "团队指令",
       "instructionPlaceholder": "输入团队的系统提示词或指令...",
-      "instructionHint": "此指令将应用于团队中的所有智能体",
+      "instructionHint": "此指令将应用于团队中的所有AI员工",
       "noTeam": "未找到默认团队",
       "cancel": "取消",
       "save": "保存",
@@ -680,7 +773,7 @@
     "chat": "对话",
     "ai": "AI助手",
     "aiFeatures": "AI 功能",
-    "agents": "智能体团队",
+    "agents": "AI员工团队",
     "mcpTools": "MCP工具",
     "knowledge": "知识库",
     "channels": "渠道管理",
@@ -693,7 +786,7 @@
   },
   "knowledge": {
     "title": "知识库",
-    "subtitle": "管理可供智能体使用的知识来源。",
+    "subtitle": "管理可供AI员工使用的知识来源。",
     "create": "创建知识库",
     "createDesc": "选择知识库类型并填写基本信息",
     "edit": "编辑知识库",
@@ -1114,6 +1207,9 @@
         "saturday": "星期六"
       }
     },
+    "empty": {
+      "selectConversation": "选择一个聊天开始对话"
+    },
     "list": {
       "searchPlaceholder": "搜索",
       "searchAria": "搜索对话",
@@ -1125,7 +1221,18 @@
     },
     "header": {
       "staffFallback": "客服",
-      "visitorFallback": "访客 {{suffix}}"
+      "visitorFallback": "访客 {{suffix}}",
+      "agentFallback": "AI员工",
+      "teamFallback": "AI员工团队",
+      "agentTooltip": "AI员工会话",
+      "endChat": "结束聊天",
+      "transfer": "转接",
+      "transferTooltip": "转接给其他客服",
+      "transferSuccess": "已转接给 {{name}}",
+      "transferError": "转接失败",
+      "transferTo": "转接给",
+      "noStaffAvailable": "暂无可用客服",
+      "loadingStaff": "加载中..."
     },
     "suggestions": {
       "label": "✨ 建议："
@@ -2146,7 +2253,7 @@
     "staff": {
       "title": "配置人工坐席",
       "description": "添加人工客服坐席账号，用于处理用户咨询",
-      "infoText": "当AI智能体无法解决用户问题时，系统会自动将对话分配给人工坐席。人工坐席可以接管对话，为用户提供更专业的人工服务。",
+      "infoText": "当AI员工无法解决用户问题时，系统会自动将对话分配给人工坐席。人工坐席可以接管对话，为用户提供更专业的人工服务。",
       "staffItem": "坐席 {{index}}",
       "username": "用户名",
       "usernamePlaceholder": "请输入用户名",
@@ -2289,7 +2396,7 @@
         "description": "上传文档或网页，构建您的专属知识库"
       },
       "agent_with_kb": {
-        "title": "创建智能体",
+        "title": "创建AI员工",
         "description": "创建 AI Agent 并关联知识库"
       },
       "first_chat": {

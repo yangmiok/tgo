@@ -99,6 +99,7 @@ async def login_staff(
     access_token = create_access_token(
         subject=user.username,
         project_id=user.project_id,
+        role=user.role,
         expires_delta=access_token_expires
     )
 

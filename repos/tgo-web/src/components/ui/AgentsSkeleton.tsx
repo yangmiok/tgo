@@ -204,8 +204,8 @@ export const AgentsEmptyState: React.FC<AgentsEmptyStateProps> = ({
   const { t } = useTranslation();
 
   // Use provided props or fallback to translations
-  const displayTitle = title || t('agents.empty.title', '暂无智能体');
-  const displayDescription = description || t('agents.empty.description', '点击「创建智能体」按钮开始创建您的第一个智能体');
+  const displayTitle = title || t('agents.empty.title', '暂无AI员工');
+  const displayDescription = description || t('agents.empty.description', '点击「创建AI员工」按钮开始创建您的第一个AI员工');
 
   return (
     <div className="text-center py-12">

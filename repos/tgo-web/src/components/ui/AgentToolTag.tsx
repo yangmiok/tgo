@@ -12,7 +12,7 @@ interface AgentToolTagProps {
 
 /**
  * Agent工具标签组件
- * 用于显示智能体关联的工具（基于API响应的工具对象）
+ * 用于显示AI员工关联的工具（基于API响应的工具对象）
  */
 const AgentToolTag: React.FC<AgentToolTagProps> = ({
   tool,

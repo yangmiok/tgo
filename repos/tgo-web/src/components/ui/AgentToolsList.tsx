@@ -17,7 +17,7 @@ interface AgentToolsListProps {
 
 /**
  * Agent工具列表组件
- * 用于显示智能体关联的工具列表（基于API响应的工具对象）
+ * 用于显示AI员工关联的工具列表（基于API响应的工具对象）
  */
 const AgentToolsList: React.FC<AgentToolsListProps> = ({
   tools,

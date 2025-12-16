@@ -18,7 +18,7 @@ interface MCPToolsListProps {
 
 /**
  * MCP工具列表组件
- * 用于显示智能体关联的MCP工具列表
+ * 用于显示AI员工关联的MCP工具列表
  */
 const MCPToolsList: React.FC<MCPToolsListProps> = ({
   toolIds,

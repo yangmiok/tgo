@@ -3,6 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LuMessageCircle, LuSparkles, LuLibrary, LuShare2, LuSettings } from 'react-icons/lu';
 import { NAVIGATION_ITEMS } from '@/utils/constants';
+import { useAuthStore } from '@/stores/authStore';
 import type { NavigationItem } from '@/types';
 
 interface NavItemProps {
@@ -50,6 +51,18 @@ const NavItem: React.FC<NavItemProps> = ({ item }) => {
  * Sidebar component with navigation and logo
  */
 const Sidebar: React.FC = () => {
+  const user = useAuthStore(state => state.user);
+  const isAdmin = user?.role === 'admin';
+
+  // Filter navigation items based on user role
+  // Non-admin users cannot see 'channels' (接入平台) and 'ai' (AI 功能)
+  const filteredItems = NAVIGATION_ITEMS.filter(item => {
+    if (!isAdmin && (item.id === 'channels' || item.id === 'ai')) {
+      return false;
+    }
+    return true;
+  });
+
   return (
     <aside className="w-16 flex flex-col items-center bg-white/70 dark:bg-gray-900/70 backdrop-blur-lg border-r border-gray-200/50 dark:border-gray-700/50 py-4 space-y-4 shrink-0 relative z-20">
       {/* System Logo */}
@@ -59,7 +72,7 @@ const Sidebar: React.FC = () => {
 
       {/* Navigation */}
       <nav className="flex flex-col items-center space-y-3">
-        {NAVIGATION_ITEMS.map((item) => (
+        {filteredItems.map((item) => (
           <NavItem key={item.id} item={item} />
         ))}
       </nav>

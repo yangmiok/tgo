@@ -34,6 +34,7 @@ import SettingsLayout from '../pages/SettingsLayout';
 import GeneralSettings from '../components/settings/GeneralSettings';
 import ProfileSettings from '../components/settings/ProfileSettings';
 import StaffSettings from '../components/settings/StaffSettings';
+import NotificationSettings from '../components/settings/NotificationSettings';
 import ModelProvidersSettings from '../components/settings/ModelProvidersSettings';
 import AboutSettings from '../components/settings/AboutSettings';
 import MarkdownTestPage from '../pages/MarkdownTestPage';
@@ -81,6 +82,7 @@ export const router = createBrowserRouter([
 
           { path: 'profile', element: <ProfileSettings /> },
           { path: 'general', element: <GeneralSettings /> },
+          { path: 'notifications', element: <NotificationSettings /> },
           { path: 'staff', element: <StaffSettings /> },
           { path: 'providers', element: <ModelProvidersSettings /> },
           { path: 'about', element: <AboutSettings /> }

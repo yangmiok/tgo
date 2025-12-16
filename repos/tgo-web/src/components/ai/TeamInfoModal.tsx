@@ -265,7 +265,7 @@ const TeamInfoModal: React.FC<TeamInfoModalProps> = ({ isOpen, onClose, team, on
                     placeholder={t('team.modal.instructionPlaceholder', '输入团队的系统提示词或指令...')}
                   />
                   <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-                    {t('team.modal.instructionHint', '此指令将应用于团队中的所有智能体')}
+                    {t('team.modal.instructionHint', '此指令将应用于团队中的所有AI员工')}
                   </p>
                 </div>
               </div>

@@ -15,7 +15,7 @@ interface AgentDetailModalProps {
 }
 
 /**
- * 智能体详情模态框组件
+ * AI员工详情模态框组件
  */
 const AgentDetailModal: React.FC<AgentDetailModalProps> = ({
   agent,
@@ -72,7 +72,7 @@ const AgentDetailModal: React.FC<AgentDetailModalProps> = ({
             />
             <div>
               <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{agent.name}</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-300">{agent.role || t('agents.card.defaultRole', '智能体')}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">{agent.role || t('agents.card.defaultRole', 'AI员工')}</p>
             </div>
             <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border ${getStatusColor(agent.status)}`}>
               <div className={`w-2 h-2 rounded-full ${agent.status === 'active' ? 'bg-green-500' : agent.status === 'error' ? 'bg-red-500' : 'bg-gray-400'}`}></div>
@@ -102,7 +102,7 @@ const AgentDetailModal: React.FC<AgentDetailModalProps> = ({
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-200">{t('agents.modal.detail.fields.agentId', '智能体ID')}</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-200">{t('agents.modal.detail.fields.agentId', 'AI员工ID')}</label>
                   <p className="text-sm text-gray-600 dark:text-gray-300 font-mono mt-1">{agent.id}</p>
                 </div>
                 <div>

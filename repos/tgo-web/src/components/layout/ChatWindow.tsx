@@ -165,7 +165,7 @@ const ChatWindow: React.FC<ChatWindowProps> = React.memo(({ activeChat, onSendMe
             onSendMessage?.(message);
           } catch (e: any) {
             const errorKey = isAgentChat ? 'chat.send.agentErrorLog' : 'chat.send.teamErrorLog';
-            const errorDefault = isAgentChat ? '智能体消息发送失败' : '团队消息发送失败';
+            const errorDefault = isAgentChat ? 'AI员工消息发送失败' : '团队消息发送失败';
             console.error(t(errorKey, errorDefault), e);
             showApiError(showToast, e);
           }

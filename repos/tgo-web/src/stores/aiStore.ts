@@ -5,7 +5,7 @@ import { AIAgentsApiService, AIAgentsTransformUtils } from '@/services/aiAgentsA
 import { useOnboardingStore } from './onboardingStore';
 
 interface AIState {
-  // 智能体相关
+  // AI员工相关
   agents: Agent[];
   selectedAgent: Agent | null;
   agentSearchQuery: string;
@@ -29,13 +29,13 @@ interface AIState {
   agentsError: string | null;
   toolsError: string | null;
 
-  // 智能体创建相关
+  // AI员工创建相关
   isCreatingAgent: boolean;
   createAgentFormData: CreateAgentFormData;
   createAgentErrors: FormValidationErrors;
   showCreateAgentModal: boolean;
   
-  // Actions - 智能体
+  // Actions - AI员工
   setAgents: (agents: Agent[]) => void;
   setSelectedAgent: (agent: Agent | null) => void;
   setAgentSearchQuery: (query: string) => void;
@@ -46,14 +46,14 @@ interface AIState {
   deleteAgent: (agentId: string) => Promise<void>;
   toggleAgentStatus: (agentId: string) => void;
 
-  // API Actions - 智能体
+  // API Actions - AI员工
   loadAgents: (params?: AgentQueryParams) => Promise<void>;
   loadAgentById: (id: string) => Promise<void>;
   refreshAgents: () => Promise<void>;
   setAgentsError: (error: string | null) => void;
   setToolsError: (error: string | null) => void;
 
-  // 智能体创建相关actions
+  // AI员工创建相关actions
   setShowCreateAgentModal: (show: boolean) => void;
   setCreateAgentFormData: (data: Partial<CreateAgentFormData>) => void;
   setCreateAgentErrors: (errors: FormValidationErrors) => void;
@@ -103,7 +103,7 @@ export const useAIStore = create<AIState>()(
         agentsError: null,
         toolsError: null,
 
-        // 智能体创建相关初始状态
+        // AI员工创建相关初始状态
         isCreatingAgent: false,
         showCreateAgentModal: false,
         createAgentFormData: {
@@ -117,7 +117,7 @@ export const useAIStore = create<AIState>()(
         },
         createAgentErrors: {},
 
-        // 智能体Actions
+        // AI员工Actions
         setAgents: (agents) => set({ agents }, false, 'setAgents'),
         setSelectedAgent: (agent) => set({ selectedAgent: agent }, false, 'setSelectedAgent'),
         setAgentSearchQuery: (query) => set({ 
@@ -283,7 +283,7 @@ export const useAIStore = create<AIState>()(
           'toggleAgentStatus'
         ),
 
-        // 智能体创建相关Actions
+        // AI员工创建相关Actions
         setShowCreateAgentModal: (show) => set({ showCreateAgentModal: show }, false, 'setShowCreateAgentModal'),
 
         setCreateAgentFormData: (data) => set(
@@ -314,7 +314,7 @@ export const useAIStore = create<AIState>()(
           const errors: FormValidationErrors = {};
 
           if (!createAgentFormData.name.trim()) {
-            errors.name = '智能体名称不能为空';
+            errors.name = 'AI员工名称不能为空';
           }
 
           if (!createAgentFormData.profession.trim()) {
@@ -322,7 +322,7 @@ export const useAIStore = create<AIState>()(
           }
 
           if (!createAgentFormData.description.trim()) {
-            errors.description = '智能体描述不能为空';
+            errors.description = 'AI员工描述不能为空';
           }
 
           if (!createAgentFormData.llmModel) {
@@ -462,7 +462,7 @@ export const useAIStore = create<AIState>()(
           return { tools, totalPages };
         },
 
-        // API Actions - 智能体
+        // API Actions - AI员工
         loadAgents: async (params) => {
           // Prevent multiple concurrent API calls
           const currentState = get();

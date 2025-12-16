@@ -51,6 +51,12 @@ interface UIState {
     animations: boolean;
     soundEnabled: boolean;
     autoSave: boolean;
+    // 通知相关设置
+    notificationEnabled: boolean;      // 是否启用桌面通知
+    notificationSound: boolean;        // 是否播放声音
+    notifyOnBackground: boolean;       // 页面不可见时通知
+    notifyOnOtherConversation: boolean; // 其他会话消息通知
+    notifyOnNewVisitor: boolean;       // 新访客通知
   };
 
   // Actions
@@ -88,7 +94,13 @@ const defaultPreferences: UIState['preferences'] = {
   density: 'comfortable',
   animations: true,
   soundEnabled: true,
-  autoSave: true
+  autoSave: true,
+  // 通知相关默认设置
+  notificationEnabled: true,
+  notificationSound: true,
+  notifyOnBackground: true,
+  notifyOnOtherConversation: true,
+  notifyOnNewVisitor: true,
 };
 
 export const useUIStore = create<UIState>()(

@@ -37,7 +37,7 @@ const getDefaultWebsiteConfig = (t: any): WebsiteWidgetConfig => ({
 });
 
 // Widget preview URL and origin (configurable via runtime config)
-const getWidgetPreviewUrlWithFallback = (apiKey?: string, mode?: 'light' | 'dark'): string => {
+const getWidgetPreviewUrlWithFallback = (apiKey?: string, mode?: 'light' | 'dark', lang?: string): string => {
   const url = getWidgetPreviewUrl();
   const baseUrl = url || 'http://127.0.0.1:5500/tgo-widget-app/dist/index.html';
 
@@ -48,6 +48,9 @@ const getWidgetPreviewUrlWithFallback = (apiKey?: string, mode?: 'light' | 'dark
   }
   if (mode) {
     params.set('mode', mode);
+  }
+  if (lang) {
+    params.set('lang', lang);
   }
 
   const queryString = params.toString();
@@ -99,7 +102,7 @@ const getWidgetScriptBase = (): string => {
 
 
 const WebsitePlatformConfig: React.FC<WebsitePlatformConfigProps> = ({ platform }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const updatePlatformConfig = usePlatformStore(s => s.updatePlatformConfig);
@@ -129,6 +132,12 @@ const WebsitePlatformConfig: React.FC<WebsitePlatformConfigProps> = ({ platform 
     }
     return themeMode;
   }, [themeMode]);
+
+  // Get current language for widget (extract base language code, e.g., 'zh-CN' -> 'zh')
+  const widgetLang = useMemo(() => {
+    const lang = i18n.language || 'zh';
+    return lang.split('-')[0]; // 'zh-CN' -> 'zh', 'en-US' -> 'en'
+  }, [i18n.language]);
 
   const defaultWebsiteConfig = useMemo(() => getDefaultWebsiteConfig(t), [t]);
 
@@ -179,9 +188,10 @@ const WebsitePlatformConfig: React.FC<WebsitePlatformConfigProps> = ({ platform 
         logoUrl: formValues.logoUrl,
         welcomeMessage: formValues.welcomeMessage,
         position: formValues.position,
+        lang: widgetLang,
       }
     }, targetOrigin);
-  }, [formValues, previewLoaded]);
+  }, [formValues, previewLoaded, widgetLang]);
   // Platform name editing
   const [platformName, setPlatformName] = useState<string>(platform.name);
   useEffect(() => { setPlatformName(platform.name); }, [platform.name]);
@@ -604,7 +614,7 @@ const WebsitePlatformConfig: React.FC<WebsitePlatformConfigProps> = ({ platform 
         <section className="lg:w-3/5 w-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-0 rounded-lg shadow-sm border border-gray-200/60 dark:border-gray-700/60 flex min-h-0">
           <iframe
             ref={iframeRef}
-            src={getWidgetPreviewUrlWithFallback(apiKey, widgetMode)}
+            src={getWidgetPreviewUrlWithFallback(apiKey, widgetMode, widgetLang)}
             onLoad={() => setPreviewLoaded(true)}
             title="Widget Preview"
             sandbox="allow-scripts allow-same-origin"

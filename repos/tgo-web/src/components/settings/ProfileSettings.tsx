@@ -17,18 +17,18 @@ import { staffApi, StaffRole, StaffStatus } from '@/services/staffApi';
 import { StaffResponse } from '@/services/api';
 import { useToast } from '@/hooks/useToast';
 
-// Role configuration for display
-const roleConfig: Record<StaffRole, { label: string; bgColor: string; textColor: string }> = {
-  admin: { label: '管理员', bgColor: 'bg-purple-100 dark:bg-purple-900/30', textColor: 'text-purple-700 dark:text-purple-300' },
-  user: { label: '坐席', bgColor: 'bg-blue-100 dark:bg-blue-900/30', textColor: 'text-blue-700 dark:text-blue-300' },
-  agent: { label: 'AI代理', bgColor: 'bg-green-100 dark:bg-green-900/30', textColor: 'text-green-700 dark:text-green-300' },
+// Role configuration for display (colors only, labels from i18n)
+const roleStyleConfig: Record<StaffRole, { bgColor: string; textColor: string }> = {
+  admin: { bgColor: 'bg-purple-100 dark:bg-purple-900/30', textColor: 'text-purple-700 dark:text-purple-300' },
+  user: { bgColor: 'bg-blue-100 dark:bg-blue-900/30', textColor: 'text-blue-700 dark:text-blue-300' },
+  agent: { bgColor: 'bg-green-100 dark:bg-green-900/30', textColor: 'text-green-700 dark:text-green-300' },
 };
 
-// Status configuration for display
-const statusConfig: Record<StaffStatus, { label: string; dotColor: string }> = {
-  online: { label: '在线', dotColor: 'bg-green-500' },
-  offline: { label: '离线', dotColor: 'bg-gray-400' },
-  busy: { label: '忙碌', dotColor: 'bg-yellow-500' },
+// Status configuration for display (colors only, labels from i18n)
+const statusStyleConfig: Record<StaffStatus, { dotColor: string }> = {
+  online: { dotColor: 'bg-green-500' },
+  offline: { dotColor: 'bg-gray-400' },
+  busy: { dotColor: 'bg-yellow-500' },
 };
 
 const ProfileSettings: React.FC = () => {
@@ -117,8 +117,12 @@ const ProfileSettings: React.FC = () => {
     );
   }
 
-  const roleInfo = roleConfig[profile?.role as StaffRole] || roleConfig.user;
-  const statusInfo = statusConfig[profile?.status as StaffStatus] || statusConfig.offline;
+  const role = (profile?.role as StaffRole) || 'user';
+  const status = (profile?.status as StaffStatus) || 'offline';
+  const roleStyle = roleStyleConfig[role] || roleStyleConfig.user;
+  const statusStyle = statusStyleConfig[status] || statusStyleConfig.offline;
+  const roleLabel = t(`settings.profile.roles.${role}`, role);
+  const statusLabel = t(`settings.profile.statuses.${status}`, status);
 
   return (
     <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
@@ -165,8 +169,8 @@ const ProfileSettings: React.FC = () => {
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 truncate">
                   {profile?.nickname || profile?.username}
                 </h2>
-                <span className={`px-2 py-0.5 text-xs rounded-full ${roleInfo.bgColor} ${roleInfo.textColor}`}>
-                  {roleInfo.label}
+                <span className={`px-2 py-0.5 text-xs rounded-full ${roleStyle.bgColor} ${roleStyle.textColor}`}>
+                  {roleLabel}
                 </span>
               </div>
 
@@ -179,8 +183,8 @@ const ProfileSettings: React.FC = () => {
                 <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                   <span className="font-medium">{t('settings.profile.status', '状态')}:</span>
                   <span className="flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full ${statusInfo.dotColor}`}></span>
-                    {statusInfo.label}
+                    <span className={`w-2 h-2 rounded-full ${statusStyle.dotColor}`}></span>
+                    {statusLabel}
                   </span>
                 </div>
 

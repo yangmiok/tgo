@@ -55,9 +55,10 @@ security = HTTPBearer()
 def create_access_token(
     subject: Union[str, Any],
     project_id: Optional[Union[str, UUID]] = None,
+    role: Optional[str] = None,
     expires_delta: Optional[timedelta] = None
 ) -> str:
-    """Create JWT access token with optional project_id."""
+    """Create JWT access token with optional project_id and role."""
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
@@ -70,6 +71,10 @@ def create_access_token(
     # Include project_id in token claims if provided
     if project_id:
         to_encode["project_id"] = str(project_id)
+    
+    # Include role in token claims if provided
+    if role:
+        to_encode["role"] = role
 
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt

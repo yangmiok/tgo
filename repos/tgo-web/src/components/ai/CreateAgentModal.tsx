@@ -28,7 +28,7 @@ import { useAuthStore } from '@/stores/authStore';
 
 
 /**
- * 智能体创建模态框组件
+ * AI员工创建模态框组件
  */
 const CreateAgentModal: React.FC = () => {
   const {
@@ -267,13 +267,13 @@ const CreateAgentModal: React.FC = () => {
       showToast(
         'success',
         t('agents.messages.createSuccess', '创建成功'),
-        t('agents.messages.createSuccessDesc', '智能体 "{name}" 已成功创建', { name: createAgentFormData.name })
+        t('agents.messages.createSuccessDesc', 'AI员工 "{name}" 已成功创建', { name: createAgentFormData.name })
       );
     } catch (error) {
-      console.error('创建智能体失败:', error);
+      console.error('创建AI员工失败:', error);
       const errorMessage = error instanceof Error
         ? error.message
-        : t('agents.messages.createFailed', '创建智能体时发生未知错误');
+        : t('agents.messages.createFailed', '创建AI员工时发生未知错误');
       showToast('error', t('agents.messages.createFailed', '创建失败'), errorMessage);
     }
   };
@@ -304,7 +304,7 @@ const CreateAgentModal: React.FC = () => {
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
             <Bot className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">{t('agents.modal.create.title', '创建智能体')}</h2>
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">{t('agents.modal.create.title', '创建AI员工')}</h2>
           </div>
           <button
             onClick={handleClose}
@@ -324,11 +324,11 @@ const CreateAgentModal: React.FC = () => {
               <SectionHeader icon={<Bot className="w-5 h-5 text-blue-600" />} title={t('agents.detail.basicInfo', '基本信息')} />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* 智能体名称 */}
+                {/* AI员工名称 */}
                 <div>
                   <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                     <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                    <span>{t('agents.form.name', '智能体名称')} <span className="text-red-500 dark:text-red-400">*</span></span>
+                    <span>{t('agents.form.name', 'AI员工名称')} <span className="text-red-500 dark:text-red-400">*</span></span>
                   </label>
                   <input
                     ref={nameInputRef}
@@ -338,7 +338,7 @@ const CreateAgentModal: React.FC = () => {
                     className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 dark:bg-gray-700 dark:text-gray-100 ${
                       createAgentErrors.name ? 'border-red-500 bg-red-50 dark:bg-red-950 dark:border-red-700' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                     }`}
-                    placeholder={t('agents.create.placeholders.name', '请输入智能体名称')}
+                    placeholder={t('agents.create.placeholders.name', '请输入AI员工名称')}
                     disabled={isCreatingAgent}
                   />
                   {createAgentErrors.name && (
@@ -427,9 +427,9 @@ const CreateAgentModal: React.FC = () => {
               </div>
             </SectionCard>
 
-            {/* 智能体描述 */}
+            {/* AI员工描述 */}
             <SectionCard variant="green">
-              <SectionHeader icon={<FolderOpen className="w-5 h-5 text-green-600" />} title={t('agents.create.sections.description', '智能体描述')} />
+              <SectionHeader icon={<FolderOpen className="w-5 h-5 text-green-600" />} title={t('agents.create.sections.description', 'AI员工描述')} />
 
               <div>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
@@ -443,7 +443,7 @@ const CreateAgentModal: React.FC = () => {
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200 resize-none dark:bg-gray-700 dark:text-gray-100 ${
                     createAgentErrors.description ? 'border-red-500 bg-red-50 dark:bg-red-950 dark:border-red-700' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                   }`}
-                  placeholder={t('agents.create.placeholders.description', '请详细描述智能体的功能、职责和特点，例如：负责处理客户咨询，提供产品信息和技术支持...')}
+                  placeholder={t('agents.create.placeholders.description', '请详细描述AI员工的功能、职责和特点，例如：负责处理客户咨询，提供产品信息和技术支持...')}
                   disabled={isCreatingAgent}
                 />
                 {createAgentErrors.description && (
@@ -515,7 +515,7 @@ const CreateAgentModal: React.FC = () => {
                 ) : (
                   <>
                     <Save className="w-4 h-4 mr-2" />
-                    {t('agents.actions.create', '创建智能体')}
+                    {t('agents.actions.create', '创建AI员工')}
                   </>
                 )}
               </button>

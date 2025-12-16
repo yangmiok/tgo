@@ -108,7 +108,7 @@ export interface Agent {
 export type AgentStatus = 'active' | 'inactive' | 'training' | 'error';
 export type AgentType = 'coordinator' | 'expert';
 
-// 智能体创建表单数据类型
+// AI员工创建表单数据类型
 export interface CreateAgentFormData {
   name: string;
   profession: string; // 职业/角色字段

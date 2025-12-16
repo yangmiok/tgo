@@ -99,7 +99,7 @@ const AgentManagement: React.FC = () => {
         console.error('Failed to load agents on mount:', error);
         showError(
           t('agents.messages.loadFailed', '加载失败'),
-          t('agents.messages.loadFailedDesc', '无法加载智能体列表，请稍后重试')
+          t('agents.messages.loadFailedDesc', '无法加载AI员工列表，请稍后重试')
         );
       }
     };
@@ -136,14 +136,14 @@ const AgentManagement: React.FC = () => {
     if (agents.length === 0) {
       showError(
         t('agents.messages.noAgentsForTeamChat', '无法发起团队对话'),
-        t('agents.messages.noAgentsForTeamChatDesc', '请先创建至少一个智能体')
+        t('agents.messages.noAgentsForTeamChatDesc', '请先创建至少一个AI员工')
       );
       return;
     }
     const channelId = `${defaultTeam.id}-team`;
     navigate(`/chat/1/${channelId}`, {
       state: {
-        agentName: defaultTeam.name || t('agents.teamChat.defaultName', '智能体团队'),
+        agentName: defaultTeam.name || t('agents.teamChat.defaultName', 'AI员工团队'),
         platform: 'team'
       }
     });
@@ -163,7 +163,7 @@ const AgentManagement: React.FC = () => {
       console.error('Failed to retry loading agents:', error);
       showError(
         t('agents.messages.retryFailed', '重试失败'),
-        t('agents.messages.retryFailedDesc', '无法加载智能体列表，请稍后重试')
+        t('agents.messages.retryFailedDesc', '无法加载AI员工列表，请稍后重试')
       );
     }
   }, [loadAgents, showError, t]);
@@ -210,12 +210,12 @@ const AgentManagement: React.FC = () => {
       });
       showSuccess(
         t('agents.messages.copySuccess', '复制成功'),
-        t('agents.messages.copySuccessDesc', `智能体 "${agent.name}" 已成功复制`, { name: agent.name })
+        t('agents.messages.copySuccessDesc', `AI员工 "${agent.name}" 已成功复制`, { name: agent.name })
       );
     } catch (error) {
       showError(
         t('agents.messages.copyFailed', '复制失败'),
-        t('agents.messages.copyFailedDesc', '复制智能体时发生错误')
+        t('agents.messages.copyFailedDesc', '复制AI员工时发生错误')
       );
     }
   };
@@ -227,13 +227,13 @@ const AgentManagement: React.FC = () => {
       });
       showSuccess(
         t('agents.messages.statusUpdateSuccess', '刷新成功'),
-        t('agents.messages.statusUpdateSuccessDesc', `智能体 "${agent.name}" 状态已更新`, { name: agent.name })
+        t('agents.messages.statusUpdateSuccessDesc', `AI员工 "${agent.name}" 状态已更新`, { name: agent.name })
       );
     } catch (error) {
       console.error('Failed to refresh agent:', error);
       showError(
         t('agents.messages.statusUpdateFailed', '刷新失败'),
-        t('agents.messages.statusUpdateFailedDesc', '更新智能体状态时发生错误')
+        t('agents.messages.statusUpdateFailedDesc', '更新AI员工状态时发生错误')
       );
     }
   };
@@ -246,14 +246,14 @@ const AgentManagement: React.FC = () => {
       await deleteAgent(selectedAgent.id);
       showSuccess(
         t('agents.messages.deleteSuccess', '删除成功'),
-        t('agents.messages.deleteSuccessDesc', `智能体 "${selectedAgent.name}" 已删除`, { name: selectedAgent.name })
+        t('agents.messages.deleteSuccessDesc', `AI员工 "${selectedAgent.name}" 已删除`, { name: selectedAgent.name })
       );
       setShowDeleteConfirm(false);
       setSelectedAgent(null);
     } catch (error) {
       showError(
         t('agents.messages.deleteFailed', '删除失败'),
-        t('agents.messages.deleteFailedDesc', '删除智能体时发生错误')
+        t('agents.messages.deleteFailedDesc', '删除AI员工时发生错误')
       );
     } finally {
       setIsDeleting(false);
@@ -279,7 +279,7 @@ const AgentManagement: React.FC = () => {
       <header className="px-6 py-4 border-b border-gray-200/80 dark:border-gray-700 flex justify-between items-center bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg sticky top-0 z-10">
         <div className="flex items-center space-x-4">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-            {t('agents.title', '智能体管理')}
+            {t('agents.title', 'AI员工管理')}
           </h2>
         </div>
         <div className="flex items-center space-x-2">
@@ -287,7 +287,7 @@ const AgentManagement: React.FC = () => {
             className="flex items-center px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm rounded-md hover:bg-green-200 dark:hover:bg-green-900/50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleChatWithTeam}
             disabled={!defaultTeam || isLoadingTeam || agents.length === 0}
-            title={agents.length === 0 ? t('agents.actions.teamChatNoAgents', '请先创建智能体') : t('agents.actions.teamChatTooltip', '与智能体团队对话')}
+            title={agents.length === 0 ? t('agents.actions.teamChatNoAgents', '请先创建AI员工') : t('agents.actions.teamChatTooltip', '与AI员工团队对话')}
           >
             <MessageCircle className="w-4 h-4 mr-1" />
             <span>{t('agents.actions.teamChat', '团队对话')}</span>
@@ -304,7 +304,7 @@ const AgentManagement: React.FC = () => {
             onClick={handleCreateAgent}
           >
             <LuPlus className="w-4 h-4 mr-1" />
-            <span>{t('agents.actions.create', '创建智能体')}</span>
+            <span>{t('agents.actions.create', '创建AI员工')}</span>
           </button>
         </div>
       </header>
@@ -321,15 +321,15 @@ const AgentManagement: React.FC = () => {
           <AgentsGridSkeleton count={9} />
         ) : agents.length === 0 ? (
           <AgentsEmptyState
-            title={t('agents.empty.title', '暂无智能体')}
-            description={t('agents.empty.description', '点击「创建智能体」按钮开始创建您的第一个智能体')}
+            title={t('agents.empty.title', '暂无AI员工')}
+            description={t('agents.empty.description', '点击「创建AI员工」按钮开始创建您的第一个AI员工')}
             actionButton={
               <button
                 onClick={handleCreateAgent}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
                 <LuPlus className="w-4 h-4 mr-2" />
-                {t('agents.actions.create', '创建智能体')}
+                {t('agents.actions.create', '创建AI员工')}
               </button>
             }
           />
@@ -386,7 +386,7 @@ const AgentManagement: React.FC = () => {
         )}
       </div>
 
-      {/* 智能体创建模态框 */}
+      {/* AI员工创建模态框 */}
       <CreateAgentModal />
 
       {/* 团队信息模态框 */}
@@ -397,7 +397,7 @@ const AgentManagement: React.FC = () => {
         onTeamUpdated={handleTeamUpdated}
       />
 
-      {/* 智能体详情模态框 */}
+      {/* AI员工详情模态框 */}
       <AgentDetailModal
         agent={selectedAgent}
         isOpen={showAgentDetail}
@@ -405,7 +405,7 @@ const AgentManagement: React.FC = () => {
         onToolClick={handleToolClick}
       />
 
-      {/* 智能体编辑模态框 */}
+      {/* AI员工编辑模态框 */}
       <EditAgentModal
         agentId={selectedAgent?.id || null}
         isOpen={showEditAgent}
@@ -415,8 +415,8 @@ const AgentManagement: React.FC = () => {
       {/* 删除确认对话框 */}
       <ConfirmDialog
         isOpen={showDeleteConfirm}
-        title={t('agents.modal.delete.title', '删除智能体')}
-        message={t('agents.modal.delete.message', `确定要删除智能体 "${selectedAgent?.name}" 吗？此操作不可撤销。`, { name: selectedAgent?.name })}
+        title={t('agents.modal.delete.title', '删除AI员工')}
+        message={t('agents.modal.delete.message', `确定要删除AI员工 "${selectedAgent?.name}" 吗？此操作不可撤销。`, { name: selectedAgent?.name })}
         confirmText={t('agents.modal.delete.confirm', '删除')}
         cancelText={t('agents.modal.delete.cancel', '取消')}
         confirmVariant="danger"

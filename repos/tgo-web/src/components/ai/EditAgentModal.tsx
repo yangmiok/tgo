@@ -32,7 +32,7 @@ interface EditAgentModalProps {
 }
 
 /**
- * 智能体编辑模态框组件
+ * AI员工编辑模态框组件
  */
 const EditAgentModal: React.FC<EditAgentModalProps> = ({
   agentId,
@@ -125,7 +125,7 @@ const EditAgentModal: React.FC<EditAgentModalProps> = ({
       console.error('Failed to fetch agent:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to load agent details';
       setAgentError(errorMessage);
-      showToast('error', t('common.loadFailed', '加载失败'), t('agents.edit.loadAgentError', '无法加载智能体详情，请稍后重试'));
+      showToast('error', t('common.loadFailed', '加载失败'), t('agents.edit.loadAgentError', '无法加载AI员工详情，请稍后重试'));
     } finally {
       setIsLoadingAgent(false);
     }
@@ -396,11 +396,11 @@ const EditAgentModal: React.FC<EditAgentModalProps> = ({
       }, mergedAvailable);
       // 强制刷新列表，确保卡片立即展示最新 tools/collections
       await refreshAgents();
-      showToast('success', t('agents.messages.updateSuccess', '更新成功'), t('agents.messages.updateSuccessDesc', '智能体 "{{name}}" 已成功更新', { name: formData.name }));
+      showToast('success', t('agents.messages.updateSuccess', '更新成功'), t('agents.messages.updateSuccessDesc', 'AI员工 "{{name}}" 已成功更新', { name: formData.name }));
       onClose();
     } catch (error) {
       console.error('Failed to update agent:', error);
-      const errorMessage = error instanceof Error ? error.message : t('agents.edit.updateFailedUnknown', '更新智能体时发生未知错误');
+      const errorMessage = error instanceof Error ? error.message : t('agents.edit.updateFailedUnknown', '更新AI员工时发生未知错误');
       showToast('error', t('agents.messages.updateFailed', '更新失败'), errorMessage);
     } finally {
       setIsUpdating(false);
@@ -437,7 +437,7 @@ const EditAgentModal: React.FC<EditAgentModalProps> = ({
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3">
               <Bot className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{t('agents.modal.edit.title', '编辑智能体')}</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{t('agents.modal.edit.title', '编辑AI员工')}</h2>
             </div>
             <button
               onClick={onClose}
@@ -453,7 +453,7 @@ const EditAgentModal: React.FC<EditAgentModalProps> = ({
             <div className="flex items-center justify-center py-12">
               <div className="flex items-center space-x-3">
                 <Loader2 className="w-6 h-6 animate-spin text-blue-600 dark:text-blue-400" />
-                <span className="text-gray-600 dark:text-gray-300">{t('agents.edit.loading', '加载智能体详情...')}</span>
+                <span className="text-gray-600 dark:text-gray-300">{t('agents.edit.loading', '加载AI员工详情...')}</span>
               </div>
             </div>
           )}
@@ -485,18 +485,18 @@ const EditAgentModal: React.FC<EditAgentModalProps> = ({
             <SectionHeader icon={<Bot className="w-5 h-5 text-blue-600" />} title={t('agents.detail.basicInfo', '基本信息')} />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* 智能体名称 */}
+              {/* AI员工名称 */}
               <div>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                  <span>{t('agents.form.name', '智能体名称')}</span>
+                  <span>{t('agents.form.name', 'AI员工名称')}</span>
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 hover:border-gray-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:hover:border-gray-500"
-                  placeholder={t('agents.create.placeholders.name', '请输入智能体名称')}
+                  placeholder={t('agents.create.placeholders.name', '请输入AI员工名称')}
                   required
                   disabled={isUpdating}
                 />
@@ -570,9 +570,9 @@ const EditAgentModal: React.FC<EditAgentModalProps> = ({
           </SectionCard>
 
 
-          {/* 智能体描述 */}
+          {/* AI员工描述 */}
           <SectionCard variant="green">
-            <SectionHeader icon={<FolderOpen className="w-5 h-5 text-green-600" />} title={t('agents.create.sections.description', '智能体描述')} />
+            <SectionHeader icon={<FolderOpen className="w-5 h-5 text-green-600" />} title={t('agents.create.sections.description', 'AI员工描述')} />
 
             <div>
               <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
@@ -583,7 +583,7 @@ const EditAgentModal: React.FC<EditAgentModalProps> = ({
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 rows={4}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200 resize-none hover:border-gray-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:hover:border-gray-500"
-                placeholder={t('agents.create.placeholders.description', '请详细描述智能体的功能、职责和特点，例如：负责处理客户咨询，提供产品信息和技术支持...')}
+                placeholder={t('agents.create.placeholders.description', '请详细描述AI员工的功能、职责和特点，例如：负责处理客户咨询，提供产品信息和技术支持...')}
                 required
                 disabled={isUpdating}
               />

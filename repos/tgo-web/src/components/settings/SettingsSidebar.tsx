@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Settings as SettingsIcon } from 'lucide-react';
-import { FiSettings, FiCpu, FiInfo, FiLogOut, FiUsers, FiUser } from 'react-icons/fi';
+import { FiSettings, FiCpu, FiInfo, FiLogOut, FiUsers, FiUser, FiBell } from 'react-icons/fi';
 import { useAuthStore } from '@/stores/authStore';
 import OnboardingSidebarPanel from '@/components/onboarding/OnboardingSidebarPanel';
 
@@ -12,17 +12,30 @@ interface SettingsSidebarProps {
 
 const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ className = '' }) => {
   const { t } = useTranslation();
-  const { logout, isAuthenticated } = useAuthStore();
+  const { logout, isAuthenticated, user } = useAuthStore();
+  const isAdmin = user?.role === 'admin';
 
-  const items: Array<{ id: string; label: string }> = [
+  const allItems: Array<{ id: string; label: string }> = [
     { id: 'profile', label: t('settings.menu.profile', '个人资料') },
     { id: 'general', label: t('settings.menu.general', '通用') },
+    { id: 'notifications', label: t('settings.menu.notifications', '消息通知') },
     { id: 'staff', label: t('settings.menu.staff', '人工坐席') },
     { id: 'providers', label: t('settings.menu.providers', '模型提供商') },
   ];
+
+  // Filter settings items based on user role
+  // Non-admin users cannot see 'staff' (人工坐席) and 'providers' (模型提供商)
+  const items = allItems.filter(item => {
+    if (!isAdmin && (item.id === 'staff' || item.id === 'providers')) {
+      return false;
+    }
+    return true;
+  });
+
   const iconMap: Record<string, React.ReactNode> = {
     profile: <FiUser className="w-4 h-4" />,
     general: <FiSettings className="w-4 h-4" />,
+    notifications: <FiBell className="w-4 h-4" />,
     staff: <FiUsers className="w-4 h-4" />,
     providers: <FiCpu className="w-4 h-4" />,
   };
