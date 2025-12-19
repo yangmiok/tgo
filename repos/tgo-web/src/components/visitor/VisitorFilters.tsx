@@ -78,7 +78,7 @@ const VisitorFilters: React.FC = () => {
   }, [availableTags, t]);
 
   const sortOptions = [
-    { value: 'last_visit_time:desc', label: t('visitor.filters.sort.lastVisit', '最近活跃') },
+    { value: 'last_offline_time:desc', label: t('visitor.filters.sort.lastVisit', '最近活跃') },
     { value: 'created_at:desc', label: t('visitor.filters.sort.createdAt', '最新创建') },
   ];
 
