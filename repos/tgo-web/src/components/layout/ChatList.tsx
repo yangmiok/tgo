@@ -520,14 +520,13 @@ const ChatListComponent: React.FC<ChatListProps> = ({
     }
   }, [isLoadingMoreManual, hasMoreManual, manualChats.length, convertWuKongIMToChat, seedChannel]);
 
-  // 获取"最近访问"访客
+  // 获取"最近在线"访客
   const fetchRecentVisitors = useCallback(async () => {
     setIsLoadingRecent(true);
     try {
       const response = await visitorApiService.listVisitors({
-        recent_online_minutes: 60*12,
         service_status: ['new'],
-        sort_by: 'last_visit_time',
+        sort_by: 'last_offline_time',
         sort_order: 'desc',
         limit: PAGE_SIZE,
         offset: 0,
@@ -550,9 +549,8 @@ const ChatListComponent: React.FC<ChatListProps> = ({
     try {
       const offset = recentVisitors.length;
       const response = await visitorApiService.listVisitors({
-        recent_online_minutes: 60*12,
         service_status: ['new'],
-        sort_by: 'last_visit_time',
+        sort_by: 'last_offline_time',
         sort_order: 'desc',
         limit: PAGE_SIZE,
         offset,

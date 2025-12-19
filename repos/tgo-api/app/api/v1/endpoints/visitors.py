@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends, File, Header, HTTPException, Request, Up
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
+from sqlalchemy import case
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.core.config import settings
@@ -93,7 +94,7 @@ async def list_visitors(
     service_status: Optional[List[str]] = Query(None, description="Filter visitors by service status (e.g., 'new', 'queued', 'active', 'closed')"),
     tag_ids: Optional[List[str]] = Query(None, description="Filter visitors by tag IDs (OR relationship)"),
     search: Optional[str] = Query(None, description="Search visitors by name, nickname, geo, ip, etc."),
-    sort_by: str = Query("created_at", description="Sort field: 'created_at' or 'last_visit_time'"),
+    sort_by: str = Query("created_at", description="Sort field: 'created_at', 'last_visit_time', or 'last_offline_time'"),
     sort_order: str = Query("desc", description="Sort order: 'asc' or 'desc'"),
     offset: int = Query(0, ge=0, description="Number of visitors to skip"),
     limit: int = Query(20, ge=1, le=100, description="Number of visitors to return"),
@@ -168,15 +169,44 @@ async def list_visitors(
     total = query.count()
 
     # Apply sorting
-    if sort_by == "last_visit_time":
-        sort_attr = Visitor.last_visit_time
+    if sort_by == "last_offline_time":
+        if sort_order == "desc":
+            # 1. Online visitors first (is_online=True -> 0, False -> 1, so asc puts True first)
+            # 2. If online, sort by created_at desc
+            # 3. If offline, sort by last_offline_time desc (most recently offline first)
+            # 4. NULL last_offline_time values go last
+            query = query.order_by(
+                case(
+                    (Visitor.is_online == True, 0),
+                    else_=1
+                ).asc(),
+                case(
+                    (Visitor.is_online == True, Visitor.created_at),
+                    else_=Visitor.last_offline_time
+                ).desc().nulls_last()
+            )
+        else:
+            # Opposite of desc: offline first, then by oldest offline time
+            query = query.order_by(
+                case(
+                    (Visitor.is_online == True, 1),
+                    else_=0
+                ).asc(),
+                case(
+                    (Visitor.is_online == True, Visitor.created_at),
+                    else_=Visitor.last_offline_time
+                ).asc().nulls_first()
+            )
     else:
-        sort_attr = Visitor.created_at
+        if sort_by == "last_visit_time":
+            sort_attr = Visitor.last_visit_time
+        else:
+            sort_attr = Visitor.created_at
 
-    if sort_order == "asc":
-        query = query.order_by(sort_attr.asc())
-    else:
-        query = query.order_by(sort_attr.desc())
+        if sort_order == "asc":
+            query = query.order_by(sort_attr.asc())
+        else:
+            query = query.order_by(sort_attr.desc())
 
     # Apply pagination
     visitors = query.offset(offset).limit(limit).all()

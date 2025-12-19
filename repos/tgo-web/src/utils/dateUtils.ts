@@ -11,13 +11,19 @@ export function parseAPITimestampToLocalDate(iso?: string | null): Date | null {
   if (!iso) return null;
   try {
     let s = iso.trim();
+    // Normalize: replace space with T
+    if (s.includes(' ')) s = s.replace(' ', 'T');
     // Keep only milliseconds (JS Date doesn't support microseconds)
     s = s.replace(/(\.\d{3})\d+$/, '$1');
     const hasTZ = /[zZ]|[+-]\d{2}:\d{2}$/.test(s);
     if (!hasTZ) s += 'Z'; // treat as UTC if TZ is missing
     const d = new Date(s);
     if (!Number.isFinite(d.getTime())) {
-      // Fallback: manual UTC parse
+      // Fallback: manual UTC parse or more aggressive cleaning
+      const cleanS = s.split('.')[0] + 'Z';
+      const d2 = new Date(cleanS);
+      if (Number.isFinite(d2.getTime())) return d2;
+
       const m = s.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?/);
       if (m) {
         const [_, Y, M, D, h, m2, s2, ms] = m;

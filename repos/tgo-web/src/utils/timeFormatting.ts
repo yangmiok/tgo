@@ -4,6 +4,7 @@
  */
 
 import i18n from '@/i18n';
+import { parseAPITimestampToLocalDate } from './dateUtils';
 
 /**
  * Format timestamp to localized date and time (up to minutes precision)
@@ -27,7 +28,7 @@ export const formatDateTime = (
   const fmtLocale = locale ?? (typeof i18n?.language === 'string' ? i18n.language : 'zh-CN');
 
   try {
-    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+    const date = typeof timestamp === 'string' ? parseAPITimestampToLocalDate(timestamp) || new Date(timestamp) : timestamp;
 
     // Check if date is valid
     if (isNaN(date.getTime())) {
@@ -267,7 +268,10 @@ export const formatWeChatConversationTime = (
   try {
     let date: Date;
     if (typeof timestamp === 'string' || typeof timestamp === 'number') {
-      date = new Date(timestamp);
+      date = typeof timestamp === 'string' 
+        ? parseAPITimestampToLocalDate(timestamp) || new Date(timestamp)
+        : new Date(timestamp);
+      
       // Handle strings like "HH:MM" by assuming today at that time
       if (typeof timestamp === 'string' && isNaN(date.getTime())) {
         const match = timestamp.trim().match(/^(\d{1,2}):(\d{2})/);

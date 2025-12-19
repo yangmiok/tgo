@@ -1,10 +1,11 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import type { VisitorResponse } from '@/services/visitorApi';
 import { ChatAvatar } from './ChatAvatar';
 import { ChatPlatformIcon } from './ChatPlatformIcon';
 import { ChatTags } from './ChatTags';
 import { toPlatformType } from '@/utils/platformUtils';
 import { formatWeChatConversationTime } from '@/utils/timeFormatting';
+import { diffMinutesFromNow } from '@/utils/dateUtils';
 
 export interface OnlineVisitorListItemProps {
   visitor: VisitorResponse;
@@ -28,6 +29,16 @@ export const OnlineVisitorListItem: React.FC<OnlineVisitorListItemProps> = React
     display_name: t.name,
     color: t.color,
   }));
+
+  const lastSeenMinutes = useMemo(() => {
+    if (visitor.is_online) return undefined;
+    return diffMinutesFromNow(visitor.last_offline_time) ?? undefined;
+  }, [visitor.is_online, visitor.last_offline_time]);
+
+  const displayTime = useMemo(() => {
+    if (visitor.is_online) return visitor.last_visit_time;
+    return visitor.last_offline_time || visitor.last_visit_time;
+  }, [visitor.is_online, visitor.last_visit_time, visitor.last_offline_time]);
   
   return (
     <div
@@ -41,6 +52,7 @@ export const OnlineVisitorListItem: React.FC<OnlineVisitorListItemProps> = React
         displayName={displayName}
         displayAvatar={displayAvatar}
         visitorStatus={visitor.is_online ? 'online' : 'offline'}
+        lastSeenMinutes={lastSeenMinutes}
         colorSeed={`${visitor.id}-vtr`}
       />
 
@@ -53,7 +65,7 @@ export const OnlineVisitorListItem: React.FC<OnlineVisitorListItemProps> = React
             </span>
           </h3>
           <span className={`text-[10px] flex-shrink-0 ml-2 ${isActive ? 'text-blue-100' : 'text-gray-400 dark:text-gray-500'}`}>
-            {formatWeChatConversationTime(visitor.last_visit_time)}
+            {formatWeChatConversationTime(displayTime)}
           </span>
         </div>
 

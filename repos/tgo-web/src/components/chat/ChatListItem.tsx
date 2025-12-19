@@ -6,6 +6,7 @@ import { useChannelDisplay } from '@/hooks/useChannelDisplay';
 import { toPlatformType } from '@/utils/platformUtils';
 import { formatWeChatConversationTime } from '@/utils/timeFormatting';
 import { formatChatLastMessage } from '@/utils/messageFormatting';
+import { diffMinutesFromNow } from '@/utils/dateUtils';
 import { ChatAvatar } from './ChatAvatar';
 import { ChatPlatformIcon } from './ChatPlatformIcon';
 import { ChatTags } from './ChatTags';
@@ -43,25 +44,6 @@ export const ChatListItem: React.FC<ChatListItemProps> = React.memo(({ chat, isA
   const displayName = name;
   const displayAvatar = avatar;
 
-  const parseMinutesAgo = useCallback((timestamp?: string): number | undefined => {
-    if (!timestamp) return undefined;
-    // Normalize: replace space with T, limit fractional seconds to 3 digits
-    let normalized = timestamp.replace(' ', 'T').replace(/(\.\d{3})\d+$/, '$1');
-    // If no timezone info, assume UTC and append 'Z'
-    if (!/[Zz]$/.test(normalized) && !/[+-]\d{2}:\d{2}$/.test(normalized)) {
-      normalized += 'Z';
-    }
-    let ms = Date.parse(normalized);
-    if (!Number.isFinite(ms)) {
-      // Fallback: drop fractional seconds entirely, still assume UTC
-      normalized = timestamp.replace(' ', 'T').split('.')[0] + 'Z';
-      ms = Date.parse(normalized);
-    }
-    if (!Number.isFinite(ms)) return undefined;
-    const minutes = Math.floor((Date.now() - ms) / 60000);
-    return Math.max(0, minutes);
-  }, []);
-
   // Get online status from extra (channel info)
   const visitorExtra = extra as ChannelVisitorExtra | undefined;
   const { visitorStatus, lastSeenMinutes } = useMemo((): { visitorStatus?: 'online' | 'offline' | 'away'; lastSeenMinutes?: number } => {
@@ -70,11 +52,11 @@ export const ChatListItem: React.FC<ChatListItemProps> = React.memo(({ chat, isA
       if (visitorExtra.is_online) {
         return { visitorStatus: 'online', lastSeenMinutes: undefined };
       }
-      return { visitorStatus: 'offline', lastSeenMinutes: parseMinutesAgo(visitorExtra.last_offline_time) };
+      return { visitorStatus: 'offline', lastSeenMinutes: diffMinutesFromNow(visitorExtra.last_offline_time) ?? undefined };
     }
     // Fallback to chat.visitorStatus
     return { visitorStatus: chat.visitorStatus, lastSeenMinutes: chat.lastSeenMinutes };
-  }, [visitorExtra?.is_online, visitorExtra?.last_offline_time, chat.visitorStatus, chat.lastSeenMinutes, parseMinutesAgo]);
+  }, [visitorExtra?.is_online, visitorExtra?.last_offline_time, chat.visitorStatus, chat.lastSeenMinutes]);
 
   const handleClick = useCallback(() => { onClick(chat); }, [onClick, chat]);
 
