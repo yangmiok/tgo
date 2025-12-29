@@ -14,7 +14,7 @@
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.0",
     "dompurify": "^3.1.6",
-    "easyjssdk": "^1.0.13",
+    "easyjssdk": "^1.0.14",
     "highlight.js": "^11.11.1",
     "i18next": "^25.7.3",
     "i18next-browser-languagedetector": "^8.2.0",

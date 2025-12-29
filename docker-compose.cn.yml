@@ -16,7 +16,9 @@ services:
   redis:
     image: registry.cn-shanghai.aliyuncs.com/tgoai/redis:7-alpine
 
-  # wukongim already uses Alibaba Cloud registry, no override needed
+  # wukongim
+  wukongim:
+    image: registry.cn-shanghai.aliyuncs.com/wukongim/wukongim:v2
 
   # TGO application services - using Alibaba Cloud ACR
   tgo-rag-worker:

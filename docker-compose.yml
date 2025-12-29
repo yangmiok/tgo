@@ -36,7 +36,7 @@ services:
 
   # WuKongIM service
   wukongim:
-    image: registry.cn-shanghai.aliyuncs.com/wukongim/wukongim:v2.2.2-20251013-dev
+    image: ghcr.io/wukongim/wukongim:v2
     container_name: tgo-wukongim
     env_file:
       - ./.env
@@ -46,6 +46,7 @@ services:
       WK_EXTERNAL_TCPADDR: ${WK_EXTERNAL_TCPADDR:-}
       WK_EXTERNAL_WSADDR: ${WK_EXTERNAL_WSADDR:-}
       WK_EXTERNAL_WSSADDR: ${WK_EXTERNAL_WSSADDR:-}
+      WK_TOKENAUTHON: ${WK_TOKENAUTHON:-true}
     volumes:
       - ./data/wukongim:/root/wukongim
     ports:
