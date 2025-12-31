@@ -118,6 +118,7 @@ export interface Agent {
   knowledgeBases: string[]; // 知识库ID列表 (for backward compatibility)
   collections?: AICollectionResponse[]; // Full collection objects from API
   tools?: AgentToolResponse[]; // Full tool objects from API
+  workflows?: string[]; // 工作流ID列表
 }
 
 export type AgentStatus = 'active' | 'inactive' | 'training' | 'error';
@@ -132,6 +133,7 @@ export interface CreateAgentFormData {
   mcpTools: string[];
   mcpToolConfigs: Record<string, Record<string, any>>; // 工具配置
   knowledgeBases: string[];
+  workflows: string[]; // 工作流ID列表
 }
 
 // 表单验证错误类型

@@ -52,7 +52,7 @@ class LLMProvider(BaseModel):
     vendor: Mapped[Optional[str]] = mapped_column(String(40), nullable=True, comment="Vendor label (e.g. deepseek)")
 
     api_base_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, comment="Custom API base URL")
-    api_key: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, comment="API key (do NOT log)")
+    api_key: Mapped[Optional[str]] = mapped_column(String(500), nullable=True, comment="API key (do NOT log)")
     organization: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, comment="Organization/tenant id")
     timeout: Mapped[Optional[float]] = mapped_column(Float, nullable=True, comment="Request timeout seconds")
 

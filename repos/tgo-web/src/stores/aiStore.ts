@@ -113,7 +113,8 @@ export const useAIStore = create<AIState>()(
           llmModel: '',
           mcpTools: [],
           mcpToolConfigs: {},
-          knowledgeBases: []
+          knowledgeBases: [],
+          workflows: []
         },
         createAgentErrors: {},
 
@@ -304,7 +305,8 @@ export const useAIStore = create<AIState>()(
             llmModel: '',
             mcpTools: [],
             mcpToolConfigs: {},
-            knowledgeBases: []
+            knowledgeBases: [],
+            workflows: []
           },
           createAgentErrors: {}
         }, false, 'resetCreateAgentForm'),

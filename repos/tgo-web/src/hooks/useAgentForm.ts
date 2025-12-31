@@ -8,6 +8,7 @@ export interface AgentFormState {
   mcpTools: string[];
   mcpToolConfigs: Record<string, Record<string, any>>;
   knowledgeBases: string[];
+  workflows: string[];
 }
 
 export interface UseAgentFormOptions {
@@ -26,6 +27,8 @@ export interface UseAgentFormResult {
   setToolConfig: (toolId: string, config: Record<string, any>) => void;
   // Knowledge bases
   removeKnowledgeBase: (kbId: string) => void;
+  // Workflows
+  removeWorkflow: (workflowId: string) => void;
   // Reset
   reset: (next?: Partial<AgentFormState>) => void;
 }
@@ -38,6 +41,7 @@ const defaultForm: AgentFormState = {
   mcpTools: [],
   mcpToolConfigs: {},
   knowledgeBases: [],
+  workflows: [],
 };
 
 export function useAgentForm(options: UseAgentFormOptions = {}): UseAgentFormResult {
@@ -88,6 +92,12 @@ export function useAgentForm(options: UseAgentFormOptions = {}): UseAgentFormRes
     setFormData({ knowledgeBases: newKBs });
   }, [formData.knowledgeBases, setFormData]);
 
+  // Workflows
+  const removeWorkflow = useCallback((workflowId: string) => {
+    const newWorkflows = (formData.workflows || []).filter(id => id !== workflowId);
+    setFormData({ workflows: newWorkflows });
+  }, [formData.workflows, setFormData]);
+
   // Reset API
   const reset = useCallback((next?: Partial<AgentFormState>) => {
     if (next) {
@@ -108,6 +118,7 @@ export function useAgentForm(options: UseAgentFormOptions = {}): UseAgentFormRes
     removeTool,
     setToolConfig,
     removeKnowledgeBase,
+    removeWorkflow,
     reset,
   };
 }

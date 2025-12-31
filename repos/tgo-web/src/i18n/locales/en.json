@@ -52,7 +52,10 @@
     "copyFailed": "Copy failed",
     "enable": "Enable",
     "more": "more",
-    "optional": "Optional"
+    "optional": "Optional",
+    "duplicate": "Duplicate",
+    "view": "View",
+    "refresh": "Refresh"
   },
   "tagInput": {
     "placeholder": "Enter tag and press Enter to add",
@@ -790,10 +793,114 @@
     "aiFeatures": "AI Features",
     "agents": "Agent Teams",
     "mcpTools": "MCP Tools",
+    "workflows": "Workflows",
     "visitors": "Visitors",
     "knowledge": "Knowledge Base",
     "channels": "Platform Management",
     "settings": "Settings"
+  },
+  "workflow": {
+    "title": "Workflows",
+    "management": {
+      "title": "Workflow Management"
+    },
+    "empty": "No workflows associated",
+    "addWorkflow": "Add Workflow",
+    "noDescription": "No description",
+    "nodes": "nodes",
+    "lastUpdated": "Updated",
+    "searchPlaceholder": "Search workflows...",
+    "status": {
+      "active": "Active",
+      "draft": "Draft",
+      "archived": "Archived"
+    },
+    "actions": {
+      "create": "Create Workflow",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteNode": "Delete Node",
+      "save": "Save",
+      "undo": "Undo",
+      "redo": "Redo",
+      "validate": "Validate"
+    },
+    "fields": {
+      "name": "Name",
+      "label": "Label",
+      "description": "Description",
+      "status": "Status",
+      "tags": "Tags",
+      "selectAgent": "Select AI Agent",
+      "selectTool": "Select MCP Tool",
+      "outputVariable": "Output Variable",
+      "conditionType": "Condition Type",
+      "expression": "Expression",
+      "variable": "Variable Name",
+      "operator": "Operator",
+      "compareValue": "Compare Value",
+      "llmPrompt": "LLM Prompt",
+      "systemPrompt": "System Prompt",
+      "userPrompt": "User Prompt",
+      "branches": "Parallel Branches",
+      "waitForAll": "Wait for All Branches",
+      "timeout": "Timeout (seconds)"
+    },
+    "conditionTypes": {
+      "expression": "Expression",
+      "variable": "Variable Comparison",
+      "llm": "LLM Evaluation"
+    },
+    "placeholders": {
+      "selectAgent": "Please select an AI Agent",
+      "selectTool": "Please select an MCP Tool"
+    },
+    "namePlaceholder": "Workflow Name",
+    "tagsPlaceholder": "Separate with commas",
+    "settings": "Workflow Settings",
+    "loading": "Loading workflow...",
+    "panel": {
+      "nodeConfig": "Node Configuration"
+    },
+    "messages": {
+      "saveSuccess": "Saved",
+      "saveSuccessDesc": "Workflow saved successfully",
+      "saveFailed": "Save Failed",
+      "saveFailedDesc": "An error occurred while saving",
+      "createFailed": "Create Failed",
+      "validateSuccess": "Validation Passed",
+      "validateSuccessDesc": "Workflow configuration is valid",
+      "validateFailed": "Validation Failed",
+      "validateFailedDesc": "Please check workflow configuration",
+      "deleteSuccess": "Deleted",
+      "deleteFailed": "Delete Failed",
+      "duplicateSuccess": "Duplicated",
+      "duplicateFailed": "Duplicate Failed",
+      "unsavedChanges": "You have unsaved changes. Are you sure you want to close?"
+    },
+    "selectModal": {
+      "title": "Select Workflow",
+      "searchPlaceholder": "Search workflows...",
+      "loading": "Loading workflows...",
+      "loadFailedDesc": "Failed to load workflows",
+      "retryFailedDesc": "Failed to load workflows",
+      "noMatch": "No matching workflows found",
+      "createNew": "Create New Workflow",
+      "manageWorkflows": "Manage Workflows",
+      "confirmSelection": "Confirm Selection ({{count}})"
+    },
+    "modal": {
+      "delete": {
+        "title": "Delete Workflow",
+        "message": "Are you sure you want to delete workflow \"{{name}}\"? This action cannot be undone."
+      }
+    },
+    "empty": {
+      "title": "No Workflows",
+      "description": "Create your first AI workflow"
+    },
+    "noMatch": "No matching workflows found",
+    "noMatch.description": "Try adjusting your search criteria"
   },
   "ai": {
     "menu": {

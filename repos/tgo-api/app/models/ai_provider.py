@@ -41,7 +41,7 @@ class AIProvider(Base):
         comment="Display name / alias shown in UI",
     )
     api_key: Mapped[str] = mapped_column(
-        String(255),
+        String(500),
         nullable=False,
         comment="API key/credential used to call the provider",
     )

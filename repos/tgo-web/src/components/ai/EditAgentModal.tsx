@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Save, RotateCcw, Bot, Wrench, FolderOpen, XCircle, User, Briefcase, Loader2 } from 'lucide-react';
+import { X, Save, RotateCcw, Bot, Wrench, FolderOpen, XCircle, User, Briefcase, Loader2, GitBranch } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 // import { getIconComponent, getIconColor } from '@/components/knowledge/IconPicker';
 import { useAIStore } from '@/stores';
@@ -17,9 +17,13 @@ import SectionHeader from '@/components/ui/SectionHeader';
 import { AIAgentsApiService, AIAgentsTransformUtils } from '@/services/aiAgentsApi';
 import MCPToolSelectionModal from './MCPToolSelectionModal';
 import KnowledgeBaseSelectionModal from './KnowledgeBaseSelectionModal';
+import { WorkflowSelectionModal } from '@/components/workflow';
 import type { Agent, MCPTool, AgentToolResponse, KnowledgeBaseItem, AgentToolDetailed, AgentToolUnion, ToolSummary } from '@/types';
+import type { WorkflowSummary } from '@/types/workflow';
 import AgentToolsSection from '@/components/ui/AgentToolsSection';
 import AgentKnowledgeBasesSection from '@/components/ui/AgentKnowledgeBasesSection';
+import AgentWorkflowsSection from '@/components/ui/AgentWorkflowsSection';
+import { useWorkflowStore } from '@/stores/workflowStore';
 import { useAgentForm } from '@/hooks/useAgentForm';
 import { useProjectToolsStore } from '@/stores/projectToolsStore';
 import { useProvidersStore } from '@/stores/providersStore';
@@ -105,12 +109,17 @@ const EditAgentModal: React.FC<EditAgentModalProps> = ({
     handleInputChange,
     removeTool,
     removeKnowledgeBase,
+    removeWorkflow,
     reset,
   } = useAgentForm();
+
+  // Workflow store
+  const { workflows, loadWorkflows } = useWorkflowStore();
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [showToolSelectionModal, setShowToolSelectionModal] = useState(false);
   const [showKnowledgeBaseSelectionModal, setShowKnowledgeBaseSelectionModal] = useState(false);
+  const [showWorkflowSelectionModal, setShowWorkflowSelectionModal] = useState(false);
 
   // Fetch agent data from API
   const fetchAgent = async (id: string): Promise<void> => {
@@ -155,6 +164,15 @@ const EditAgentModal: React.FC<EditAgentModalProps> = ({
     }
   }, [isOpen]);
 
+  // Ensure workflows are loaded when modal opens
+  useEffect(() => {
+    if (isOpen && workflows.length === 0) {
+      loadWorkflows().catch((e) => {
+        console.warn('Failed to load workflows for EditAgentModal:', e);
+      });
+    }
+  }, [isOpen, workflows.length, loadWorkflows]);
+
   // 初始化表单数据（直接基于 agent.tools，无需依赖工具商店列表）
   useEffect(() => {
     if (agent && !isLoadingAgent) {
@@ -172,6 +190,7 @@ const EditAgentModal: React.FC<EditAgentModalProps> = ({
         mcpTools: toolIds,
         mcpToolConfigs: agent.mcpToolConfigs || {},
         knowledgeBases: kbIds,
+        workflows: agent.workflows || [],
       });
     }
   }, [agent, knowledgeBases, isLoadingAgent]);
@@ -284,6 +303,11 @@ const EditAgentModal: React.FC<EditAgentModalProps> = ({
     return (knowledgeBases as KnowledgeBaseItem[]).filter((kb: KnowledgeBaseItem) => formData.knowledgeBases.includes(kb.id));
   }, [knowledgeBases, formData.knowledgeBases]);
 
+  // 已添加的工作流列表
+  const addedWorkflows = useMemo<WorkflowSummary[]>(() => {
+    return workflows.filter((wf) => formData.workflows.includes(wf.id));
+  }, [workflows, formData.workflows]);
+
   // 输入处理由 hook 提供
 
   // 处理工具移除
@@ -291,6 +315,9 @@ const EditAgentModal: React.FC<EditAgentModalProps> = ({
 
   // 处理知识库移除
   const handleKnowledgeBaseRemove = (kbId: string) => { removeKnowledgeBase(kbId); };
+
+  // 处理工作流移除
+  const handleWorkflowRemove = (workflowId: string) => { removeWorkflow(workflowId); };
 
   // 知识库图标颜色由通用组件处理
 
@@ -423,6 +450,7 @@ const EditAgentModal: React.FC<EditAgentModalProps> = ({
         mcpTools: toolIds,
         mcpToolConfigs: agent.mcpToolConfigs || {},
         knowledgeBases: kbIds,
+        workflows: agent.workflows || [],
       });
     }
   };
@@ -615,6 +643,18 @@ const EditAgentModal: React.FC<EditAgentModalProps> = ({
             />
           </SectionCard>
 
+          {/* 工作流选择 */}
+          <SectionCard variant="purple">
+            <SectionHeader icon={<GitBranch className="w-5 h-5 text-purple-600" />} title={t('workflow.title', '工作流')} />
+
+            <AgentWorkflowsSection
+              workflows={addedWorkflows}
+              onAdd={() => setShowWorkflowSelectionModal(true)}
+              onRemove={handleWorkflowRemove}
+              disabled={isUpdating}
+            />
+          </SectionCard>
+
                 </div>
               </div>
 
@@ -680,6 +720,15 @@ const EditAgentModal: React.FC<EditAgentModalProps> = ({
         selectedKnowledgeBases={formData.knowledgeBases}
         onConfirm={(selectedKnowledgeBaseIds) => {
           setFormData({ knowledgeBases: selectedKnowledgeBaseIds });
+        }}
+      />
+
+      <WorkflowSelectionModal
+        isOpen={showWorkflowSelectionModal}
+        onClose={() => setShowWorkflowSelectionModal(false)}
+        selectedWorkflows={formData.workflows}
+        onConfirm={(selectedWorkflowIds) => {
+          setFormData({ workflows: selectedWorkflowIds });
         }}
       />
     </>

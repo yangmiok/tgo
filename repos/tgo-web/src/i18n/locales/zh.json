@@ -52,7 +52,10 @@
     "copyFailed": "复制失败",
     "enable": "启用",
     "more": "更多",
-    "optional": "可选"
+    "optional": "可选",
+    "duplicate": "复制",
+    "view": "查看",
+    "refresh": "刷新"
   },
   "tagInput": {
     "placeholder": "输入标签并按回车键添加",
@@ -1109,10 +1112,114 @@
     "aiFeatures": "AI 功能",
     "agents": "AI员工团队",
     "mcpTools": "MCP工具",
+    "workflows": "工作流",
     "visitors": "访客管理",
     "knowledge": "知识库",
     "channels": "渠道管理",
     "settings": "设置"
+  },
+  "workflow": {
+    "title": "工作流",
+    "management": {
+      "title": "工作流管理"
+    },
+    "empty": "暂未关联工作流",
+    "addWorkflow": "添加工作流",
+    "noDescription": "暂无描述",
+    "nodes": "节点",
+    "lastUpdated": "更新于",
+    "searchPlaceholder": "搜索工作流...",
+    "status": {
+      "active": "已启用",
+      "draft": "草稿",
+      "archived": "已归档"
+    },
+    "actions": {
+      "create": "创建工作流",
+      "edit": "编辑",
+      "delete": "删除",
+      "deleteNode": "删除节点",
+      "save": "保存",
+      "undo": "撤销",
+      "redo": "重做",
+      "validate": "验证"
+    },
+    "fields": {
+      "name": "名称",
+      "label": "标签",
+      "description": "描述",
+      "status": "状态",
+      "tags": "标签",
+      "selectAgent": "选择AI员工",
+      "selectTool": "选择MCP工具",
+      "outputVariable": "输出变量名",
+      "conditionType": "条件类型",
+      "expression": "表达式",
+      "variable": "变量名",
+      "operator": "运算符",
+      "compareValue": "比较值",
+      "llmPrompt": "LLM提示词",
+      "systemPrompt": "系统提示词",
+      "userPrompt": "用户提示词",
+      "branches": "并行分支数",
+      "waitForAll": "等待所有分支完成",
+      "timeout": "超时时间 (秒)"
+    },
+    "conditionTypes": {
+      "expression": "表达式",
+      "variable": "变量比较",
+      "llm": "LLM判断"
+    },
+    "placeholders": {
+      "selectAgent": "请选择AI员工",
+      "selectTool": "请选择MCP工具"
+    },
+    "namePlaceholder": "工作流名称",
+    "tagsPlaceholder": "用逗号分隔",
+    "settings": "工作流设置",
+    "loading": "加载工作流...",
+    "panel": {
+      "nodeConfig": "节点配置"
+    },
+    "messages": {
+      "saveSuccess": "保存成功",
+      "saveSuccessDesc": "工作流已保存",
+      "saveFailed": "保存失败",
+      "saveFailedDesc": "保存工作流时发生错误",
+      "createFailed": "创建失败",
+      "validateSuccess": "验证通过",
+      "validateSuccessDesc": "工作流配置正确",
+      "validateFailed": "验证失败",
+      "validateFailedDesc": "请检查工作流配置",
+      "deleteSuccess": "删除成功",
+      "deleteFailed": "删除失败",
+      "duplicateSuccess": "复制成功",
+      "duplicateFailed": "复制失败",
+      "unsavedChanges": "有未保存的更改，确定要关闭吗？"
+    },
+    "selectModal": {
+      "title": "选择工作流",
+      "searchPlaceholder": "搜索工作流...",
+      "loading": "正在加载工作流...",
+      "loadFailedDesc": "无法加载工作流列表",
+      "retryFailedDesc": "无法加载工作流列表",
+      "noMatch": "未找到匹配的工作流",
+      "createNew": "创建新工作流",
+      "manageWorkflows": "管理工作流",
+      "confirmSelection": "确认选择 ({{count}})"
+    },
+    "modal": {
+      "delete": {
+        "title": "删除工作流",
+        "message": "确定要删除工作流 \"{{name}}\" 吗？此操作不可撤销。"
+      }
+    },
+    "empty": {
+      "title": "暂无工作流",
+      "description": "创建您的第一个AI工作流"
+    },
+    "noMatch": "未找到匹配的工作流",
+    "noMatch.description": "尝试调整搜索条件"
   },
   "platforms": {
     "list": {

@@ -54,6 +54,12 @@ export const AI_MENU_ITEMS: NavigationItem[] = [
     title: 'navigation.mcpTools',
     icon: 'Wrench',
     path: '/ai/mcp-tools'
+  },
+  {
+    id: 'workflows',
+    title: 'navigation.workflows',
+    icon: 'GitBranch',
+    path: '/ai/workflows'
   }
 ];
 

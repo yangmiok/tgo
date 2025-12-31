@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { X, Save, RotateCcw, Bot, Wrench, FolderOpen, XCircle, User, Briefcase } from 'lucide-react';
+import { X, Save, RotateCcw, Bot, Wrench, FolderOpen, XCircle, User, Briefcase, GitBranch } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import ModalFooter from '@/components/ui/ModalFooter';
@@ -17,9 +17,13 @@ import SectionHeader from '@/components/ui/SectionHeader';
 
 import MCPToolSelectionModal from './MCPToolSelectionModal';
 import KnowledgeBaseSelectionModal from './KnowledgeBaseSelectionModal';
+import { WorkflowSelectionModal } from '@/components/workflow';
 import type { MCPTool } from '@/types';
+import type { WorkflowSummary } from '@/types/workflow';
 import AgentToolsSection from '@/components/ui/AgentToolsSection';
 import AgentKnowledgeBasesSection from '@/components/ui/AgentKnowledgeBasesSection';
+import AgentWorkflowsSection from '@/components/ui/AgentWorkflowsSection';
+import { useWorkflowStore } from '@/stores/workflowStore';
 import { useAgentForm } from '@/hooks/useAgentForm';
 import { useProvidersStore } from '@/stores/providersStore';
 import AIProvidersApiService from '@/services/aiProvidersApi';
@@ -137,11 +141,25 @@ const CreateAgentModal: React.FC = () => {
   // Knowledge base selection modal state
   const [showKnowledgeBaseSelectionModal, setShowKnowledgeBaseSelectionModal] = useState(false);
 
+  // Workflow selection modal state
+  const [showWorkflowSelectionModal, setShowWorkflowSelectionModal] = useState(false);
+
+  // Workflow store
+  const { workflows, loadWorkflows } = useWorkflowStore();
+
+  // Load workflows when modal is open
+  useEffect(() => {
+    if (showCreateAgentModal && workflows.length === 0) {
+      loadWorkflows().catch(() => {});
+    }
+  }, [showCreateAgentModal, workflows.length, loadWorkflows]);
+
   // Shared form logic (controlled by store formData)
   const {
     handleInputChange,
     removeTool,
     removeKnowledgeBase,
+    removeWorkflow,
   } = useAgentForm({
     controlledFormData: createAgentFormData,
     onFormDataChange: setCreateAgentFormData,
@@ -166,6 +184,11 @@ const CreateAgentModal: React.FC = () => {
   const addedKnowledgeBases = useMemo(() => {
     return knowledgeBases.filter(kb => createAgentFormData.knowledgeBases.includes(kb.id));
   }, [knowledgeBases, createAgentFormData.knowledgeBases]);
+
+  // 已添加的工作流列表
+  const addedWorkflows = useMemo<WorkflowSummary[]>(() => {
+    return workflows.filter(wf => createAgentFormData.workflows.includes(wf.id));
+  }, [workflows, createAgentFormData.workflows]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -291,6 +314,11 @@ const CreateAgentModal: React.FC = () => {
   // 处理知识库移除
   const handleKnowledgeBaseRemove = (kbId: string) => {
     removeKnowledgeBase(kbId);
+  };
+
+  // 处理工作流移除
+  const handleWorkflowRemove = (workflowId: string) => {
+    removeWorkflow(workflowId);
   };
 
   // 知识库图标颜色由通用组件处理
@@ -480,6 +508,18 @@ const CreateAgentModal: React.FC = () => {
               />
             </SectionCard>
 
+            {/* 工作流选择 */}
+            <SectionCard variant="purple">
+              <SectionHeader icon={<GitBranch className="w-5 h-5 text-purple-600" />} title={t('workflow.title', '工作流')} />
+
+              <AgentWorkflowsSection
+                workflows={addedWorkflows}
+                onAdd={() => setShowWorkflowSelectionModal(true)}
+                onRemove={handleWorkflowRemove}
+                disabled={isCreatingAgent}
+              />
+            </SectionCard>
+
             </div>
           </div>
 
@@ -546,6 +586,16 @@ const CreateAgentModal: React.FC = () => {
         selectedKnowledgeBases={createAgentFormData.knowledgeBases}
         onConfirm={(selectedKnowledgeBaseIds) => {
           setCreateAgentFormData({ knowledgeBases: selectedKnowledgeBaseIds });
+        }}
+      />
+
+      {/* Workflow Selection Modal */}
+      <WorkflowSelectionModal
+        isOpen={showWorkflowSelectionModal}
+        onClose={() => setShowWorkflowSelectionModal(false)}
+        selectedWorkflows={createAgentFormData.workflows}
+        onConfirm={(selectedWorkflowIds) => {
+          setCreateAgentFormData({ workflows: selectedWorkflowIds });
         }}
       />
     </div>

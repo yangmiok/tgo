@@ -20,14 +20,15 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Remove the unique constraint on (project_id, alias)
-    op.drop_constraint('uq_ai_llm_providers_project_alias', 'ai_llm_providers', type_='unique')
+    with op.batch_alter_table('ai_llm_providers', schema=None) as batch_op:
+        batch_op.drop_constraint('uq_ai_llm_providers_project_alias', type_='unique')
 
 
 def downgrade() -> None:
     # Re-create the unique constraint
-    op.create_unique_constraint(
-        'uq_ai_llm_providers_project_alias',
-        'ai_llm_providers',
-        ['project_id', 'alias']
-    )
+    with op.batch_alter_table('ai_llm_providers', schema=None) as batch_op:
+        batch_op.create_unique_constraint(
+            'uq_ai_llm_providers_project_alias',
+            ['project_id', 'alias']
+        )
 
