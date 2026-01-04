@@ -1372,6 +1372,18 @@ cmd_upgrade() {
   compose_file_args=$(get_compose_file_args "$mode" "$use_cn") || exit 1
   log_deploy_mode "$mode" "$use_cn" "Upgrading"
 
+  # Step 0: Pull latest code from git (common for both modes)
+  echo ""
+  echo "[INFO] Pulling latest code from git..."
+  [ "$use_cn" = "true" ] && echo "[INFO] Using Gitee mirrors for git operations"
+  git pull || echo "[WARN] git pull failed, continuing with existing code"
+
+  # Update submodules if present
+  if [ -f ".gitmodules" ]; then
+    echo "[INFO] Updating git submodules..."
+    git submodule update --init --recursive || echo "[WARN] Submodule update failed"
+  fi
+
   # Upgrade flow based on mode
   if [ "$mode" = "source" ]; then
     echo ""
@@ -1380,36 +1392,24 @@ cmd_upgrade() {
     echo "========================================="
     echo ""
 
-    # Step 1: Pull latest code
-    echo "[INFO] Step 1/5: Pulling latest code from git..."
-    [ "$use_cn" = "true" ] && echo "[INFO] Using Gitee mirrors for git operations"
-    git pull || echo "[WARN] git pull failed, continuing with existing code"
-
-    # Update submodules
-    if [ -f ".gitmodules" ]; then
-      echo "[INFO] Updating git submodules..."
-      git submodule update --init --recursive || echo "[WARN] Submodule update failed"
-    fi
-
-    # Step 2: Rebuild images
-    echo ""
-    echo "[INFO] Step 2/5: Rebuilding Docker images from source..."
+    # Step 1: Rebuild images
+    echo "[INFO] Step 1/4: Rebuilding Docker images from source..."
     docker compose --env-file "$ENV_FILE" $compose_file_args build
 
-    # Step 3: Stop current services
+    # Step 2: Stop current services
     echo ""
-    echo "[INFO] Step 3/5: Stopping current services..."
+    echo "[INFO] Step 2/4: Stopping current services..."
     docker compose --env-file "$ENV_FILE" $compose_file_args down
 
-    # Step 4: Start infrastructure and run migrations
+    # Step 3: Start infrastructure and run migrations
     echo ""
-    echo "[INFO] Step 4/5: Starting infrastructure services..."
+    echo "[INFO] Step 3/4: Starting infrastructure services..."
     start_infrastructure "$compose_file_args"
     wait_for_postgres "$compose_file_args"
 
-    # Step 5: Run database migrations
+    # Step 4: Run database migrations
     echo ""
-    echo "[INFO] Step 5/5: Running database migrations..."
+    echo "[INFO] Step 4/4: Running database migrations..."
     run_all_migrations "$compose_file_args"
 
   else
@@ -1420,27 +1420,27 @@ cmd_upgrade() {
     echo ""
 
     # Step 1: Pull latest images
-    echo "[INFO] Step 1/5: Pulling latest Docker images..."
+    echo "[INFO] Step 1/4: Pulling latest Docker images..."
     echo "[INFO] Pulling from $([ "$use_cn" = "true" ] && echo "Alibaba Cloud ACR" || echo "GitHub Container Registry")..."
     docker compose --env-file "$ENV_FILE" $compose_file_args pull
 
     # Step 2: Stop current services
     echo ""
-    echo "[INFO] Step 2/5: Stopping current services..."
+    echo "[INFO] Step 2/4: Stopping current services..."
     docker compose --env-file "$ENV_FILE" $compose_file_args down
 
     # Step 3: Start infrastructure services
     echo ""
-    echo "[INFO] Step 3/5: Starting infrastructure services..."
+    echo "[INFO] Step 3/4: Starting infrastructure services..."
     start_infrastructure "$compose_file_args"
     wait_for_postgres "$compose_file_args"
 
     # Step 4: Run database migrations
     echo ""
-    echo "[INFO] Step 4/5: Running database migrations..."
+    echo "[INFO] Step 4/4: Running database migrations..."
     run_all_migrations "$compose_file_args"
 
-    # Step 5: Start all services (handled below)
+    # Start all services (handled below)
   fi
 
   # Start all services
