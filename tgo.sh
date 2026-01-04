@@ -601,6 +601,23 @@ ENVEOF
   if [ ! -d "envs" ] && [ -d "envs.docker" ]; then
     cp -R "envs.docker" "envs"
     echo "[INFO] Created envs/ from envs.docker."
+  elif [ -d "envs" ] && [ -d "envs.docker" ]; then
+    # Sync new env files from envs.docker to envs (don't overwrite existing)
+    local new_files_added=false
+    for src_file in envs.docker/*.env; do
+      [ -f "$src_file" ] || continue
+      local filename
+      filename=$(basename "$src_file")
+      local dest_file="envs/$filename"
+      if [ ! -f "$dest_file" ]; then
+        cp "$src_file" "$dest_file"
+        echo "[INFO] Added new env file: envs/$filename"
+        new_files_added=true
+      fi
+    done
+    if [ "$new_files_added" = false ]; then
+      : # All env files already exist, nothing to report
+    fi
   fi
 }
 
@@ -1057,17 +1074,24 @@ show_install_complete_message() {
 wait_for_postgres() {
   local compose_file_args=${1:-"-f $MAIN_COMPOSE_IMAGE"}
   echo "[INFO] Waiting for Postgres to be ready..."
-  local retries=60
+  local retries=30
   local user="${POSTGRES_USER:-tgo}"
   local db="${POSTGRES_DB:-tgo}"
+  local attempt=0
   for _ in $(seq 1 "$retries"); do
+    attempt=$((attempt + 1))
     if docker compose --env-file "$ENV_FILE" $compose_file_args exec -T postgres pg_isready -U "$user" -d "$db" >/dev/null 2>&1; then
       echo "[INFO] Postgres is ready."
       return 0
     fi
+    # Show progress every 5 attempts
+    if [ $((attempt % 5)) -eq 0 ]; then
+      echo "[INFO] Still waiting for Postgres... (attempt $attempt/$retries)"
+    fi
     sleep 2
   done
-  echo "[ERROR] Postgres was not ready in time."
+  echo "[ERROR] Postgres was not ready in time after $retries attempts."
+  echo "[ERROR] Try running manually: docker compose exec postgres pg_isready -U $user -d $db"
   return 1
 }
 
